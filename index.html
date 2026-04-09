@@ -1110,11 +1110,20 @@ function initFirebase(){
     setFbIndicator(true);
     // Real-time data listener — all visitors get live updates including after refresh
     db.collection('ishwar').doc('site_data').onSnapshot(function(snap){
-      if(snap.exists){var d=snap.data();if(d.D){D=d.D;applySettings();renderAll();}}
-    },function(e){console.error('Firestore error:',e);});
-    db.collection('ishwar').doc('pkg_details').onSnapshot(function(snap){
-      if(snap.exists&&snap.data().P)PKG_D=snap.data().P;
-    },function(){});
+  if(snap.exists){
+    var d=snap.data();
+    if(d.D){D=d.D;applySettings();renderAll();}
+  }
+},function(e){console.error('Firestore site_data error:',e);});
+
+db.collection('ishwar').doc('pkg_details').onSnapshot(function(snap){
+  if(snap.exists){
+    var d=snap.data();
+    if(d.P){
+      Object.keys(d.P).forEach(function(k){PKG_D[k]=d.P[k];});
+    }
+  }
+},function(e){console.error('Firestore pkg_details error:',e);});
   }catch(e){
     console.error('Firebase init error:',e);
     setFbIndicator(false);
@@ -1126,13 +1135,26 @@ function setFbIndicator(ok){
 }
 
 /* ====== FIREBASE PERSIST ====== */
-async function persist(){
+// async function persist(){
+//   if(!fbOk||!db){showToast('⚠️ Firebase not connected — changes not saved.',true);return;}
+//   try{
+//     await db.collection('ishwar').doc('site_data').set({D:D});
+//     await db.collection('ishwar').doc('pkg_details').set({P:PKG_D});
+//     showToast('✅ Saved! All visitors see updates immediately.');
+//   }catch(e){showToast('❌ Save failed: '+e.message,true);}
+// }
+  async function persist(){
   if(!fbOk||!db){showToast('⚠️ Firebase not connected — changes not saved.',true);return;}
   try{
     await db.collection('ishwar').doc('site_data').set({D:D});
-    await db.collection('ishwar').doc('pkg_details').set({P:PKG_D});
+    var pkgToSave={};
+    Object.keys(PKG_D).forEach(function(k){pkgToSave[String(k)]=PKG_D[k];});
+    await db.collection('ishwar').doc('pkg_details').set({P:pkgToSave});
     showToast('✅ Saved! All visitors see updates immediately.');
-  }catch(e){showToast('❌ Save failed: '+e.message,true);}
+  }catch(e){
+    console.error('Persist error:',e);
+    showToast('❌ Save failed: '+e.message,true);
+  }
 }
 
 /* ====== FIREBASE STORAGE UPLOAD ====== */
@@ -1255,7 +1277,7 @@ function initSlider(){
 function goSlide(n){var sl=document.querySelectorAll('.hs'),ds=document.querySelectorAll('.h-dot');sl[curSlide].classList.remove('on');ds[curSlide].classList.remove('on');curSlide=n;sl[n].classList.add('on');ds[n].classList.add('on');}
 
 /* ====== PKG DETAIL ====== */
-function getPKG(id){return PKG_D[id]||{overview:'',highlights:[],itinerary:[],inc:[],exc:[]};}
+function getPKG(id){return PKG_D[String(id)]||PKG_D[id]||{overview:'',highlights:[],itinerary:[],inc:[],exc:[]};}
 function openPkgDetail(id){
   var p=D.packages.find(function(x){return x.id===id;});if(!p)return;
   var d=getPKG(id);
@@ -1517,7 +1539,8 @@ function savePkg(){
   var pkgId;
   if(editPkgId===-1){pkgId=genId();D.packages.push(Object.assign({id:pkgId},data));}
   else{pkgId=editPkgId;var p=D.packages.find(function(x){return x.id===pkgId;});if(p)Object.assign(p,data);}
-  PKG_D[pkgId]={overview:gid('pe-overview').value.trim()||data.desc,highlights:highlights,itinerary:itinerary,inc:incLines,exc:excLines};
+  // PKG_D[pkgId]={overview:gid('pe-overview').value.trim()||data.desc,highlights:highlights,itinerary:itinerary,inc:incLines,exc:excLines};
+  PKG_D[String(pkgId)]={overview:gid('pe-overview').value.trim()||data.desc,highlights:highlights,itinerary:itinerary,inc:incLines,exc:excLines};
   persist();renderAll();renderAdmTbls();closeEf('pkg-ef');
 }
 
