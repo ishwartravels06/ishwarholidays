@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<title>Ishwar Holidays — Jammu & Kashmir Tourism</title>
+
+<!--
+=======================================================
+  ISHWAR HOLIDAYS — PRODUCTION READY
+  
+  SETUP CHECKLIST:
+  ─────────────────────────────────────────────────────
+  1. FIREBASE (for live data sync):
+     a) Go to https://console.firebase.google.com
+     b) Create project → Enable Firestore (test mode)
+     c) Project Settings → Web App → Copy config
+     d) Replace FIREBASE CONFIG section below
+     e) In Firestore, create doc: ishwar_config/admin
+        Fields: username (string), password (string)
+
+  2. EMAILJS (for booking & enquiry emails — FREE):
+     a) Go to https://www.emailjs.com → Sign up free
+     b) Add Email Service (use Gmail → info@ishwarholidays.com)
+     c) Create 3 templates (see EMAILJS TEMPLATES below)
+     d) Replace EMAILJS CONFIG section below
+
+  3. GITHUB PAGES (free hosting):
+     a) Create repo: ishwarholidays (or any name)
+     b) Upload this single index.html file
+     c) Settings → Pages → Deploy from main branch
+     d) Your site: https://yourusername.github.io/ishwarholidays
+
+  4. HOSTINGER DOMAIN (ishwarholidays.com):
+     a) Hostinger → Domains → ishwarholidays.com → DNS
+     b) Add CNAME record:
+        Name: www  →  Value: yourusername.github.io
+     c) Add A records (GitHub IPs):
+        185.199.108.153
+        185.199.109.153
+        185.199.110.153
+        185.199.111.153
+     d) In GitHub repo → Settings → Pages → Custom Domain
+        Type: ishwarholidays.com → Save
+     e) Check "Enforce HTTPS" after DNS propagates (~24 hrs)
+
+  5. FIREBASE STORAGE (for photo uploads):
+     a) Firebase Console → Storage → Get Started
+     b) Start in test mode → Done
+     c) Update Storage rules (see STORAGE RULES section)
+
+  ADMIN ACCESS: Press Ctrl+Shift+A
+  Credentials stored securely in Firestore → ishwar_config/admin
+  Default (set in Firestore): username: admin | password: Ishwar@2024
+  
+  EMAILJS TEMPLATES NEEDED:
+  ─────────────────────────
+  Template 1 ID: booking_admin  (sent to info@ishwarholidays.com)
+  Subject: New Booking — {{package_name}} | Ref: {{ref_id}}
+  Body: 
+    Booking Reference: {{ref_id}}
+    Package: {{package_name}}
+    Name: {{customer_name}}
+    Phone: {{customer_phone}}
+    Email: {{customer_email}}
+    Check-in: {{checkin}}
+    Adults: {{adults}} | Children: {{children}}
+    Payment Plan: {{payment_plan}}
+    Amount Paid: ₹{{amount_paid}}
+    Special Requests: {{special_requests}}
+
+  Template 2 ID: booking_customer (sent to customer)
+  Subject: Booking Confirmed! Ref: {{ref_id}} — Ishwar Holidays
+  Body:
+    Dear {{customer_name}},
+    Your booking is confirmed! 🎉
+    Reference No: {{ref_id}}
+    Package: {{package_name}}
+    Check-in: {{checkin}}
+    We have received your booking. Our support team will call you shortly at {{customer_phone}}.
+    Thank you for choosing Ishwar Holidays!
+
+  Template 3 ID: enquiry_admin (sent to info@ishwarholidays.com)  
+  Subject: New Enquiry from {{customer_name}}
+  Body:
+    Name: {{customer_name}}
+    Phone: {{customer_phone}}
+    Email: {{customer_email}}
+    Destination: {{destination}}
+    Month: {{travel_month}}
+    Group: {{group_size}}
+    Message: {{message}}
+
+  FIREBASE STORAGE RULES (paste in Firebase Console → Storage → Rules):
+  rules_version = '2';
+  service firebase.storage {
+    match /b/{bucket}/o {
+      match /ishwar_uploads/{allPaths=**} {
+        allow read: if true;
+        allow write: if true; // Tighten after launch
+      }
+    }
+  }
+=======================================================
+-->
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+<!-- EmailJS -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+:root{--navy:#09142a;--blue:#1d4080;--gold:#c8a84b;--gold2:#e2c87a;--cream:#faf7f0;--w:#fff;--gray:#64748b;--lg:#f1f5f9;--text:#1e293b;--bdr:#e2e8f0;--sh:0 4px 20px rgba(9,20,42,.1);--shlg:0 12px 48px rgba(9,20,42,.18);--tr:all .3s ease;--r:12px;--rl:16px}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Inter',sans-serif;color:var(--text);background:var(--w);overflow-x:hidden;line-height:1.6}
+a{text-decoration:none;color:inherit}img{max-width:100%;display:block}
+button{cursor:pointer;border:none;outline:none;font-family:'Inter',sans-serif}
+input,textarea,select{outline:none;font-family:'Inter',sans-serif;-webkit-appearance:none}
+h1,h2,h3,h4{font-family:'Playfair Display',serif;line-height:1.3}
+.con{max-width:1280px;margin:0 auto;padding:0 16px}
+@media(min-width:640px){.con{padding:0 24px}}
+@media(min-width:1024px){.con{padding:0 32px}}
+.sec{padding:56px 0}@media(min-width:768px){.sec{padding:80px 0}}
+.stitle{font-size:1.75rem;color:var(--navy);margin-bottom:8px}
+@media(min-width:640px){.stitle{font-size:2rem}}@media(min-width:1024px){.stitle{font-size:2.2rem}}
+.ssub{font-size:.88rem;color:var(--gray);margin-bottom:32px;max-width:580px;line-height:1.7}
+.gold{color:var(--gold)}.tc{text-align:center}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.65rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.b-gold{background:var(--gold);color:var(--navy)}.b-navy{background:var(--navy);color:#fff}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:8px;font-size:.84rem;font-weight:600;transition:var(--tr);white-space:nowrap;border:none}
+@media(min-width:768px){.btn{padding:12px 26px;font-size:.88rem}}
+.btn-gold{background:var(--gold);color:var(--navy)}.btn-gold:hover{background:var(--gold2);transform:translateY(-2px)}
+.btn-navy{background:var(--navy);color:#fff}.btn-navy:hover{background:var(--blue)}
+.btn-out{background:transparent;border:2px solid var(--gold);color:var(--gold)}.btn-out:hover{background:var(--gold);color:var(--navy)}
+.btn-sm{padding:7px 14px;font-size:.78rem}
+.btn-ghost{background:var(--lg);color:var(--text)}.btn-ghost:hover{background:var(--bdr)}
+/* LOADER */
+#loader{position:fixed;inset:0;background:var(--navy);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;animation:loaderOut .5s ease 1.8s forwards;pointer-events:none}
+@keyframes loaderOut{to{opacity:0;visibility:hidden}}
+.ld-txt{font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--gold);letter-spacing:2px}
+.ld-sub{font-size:.68rem;color:rgba(255,255,255,.5);letter-spacing:3px;text-transform:uppercase}
+.ld-bar{width:160px;height:3px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden}
+.ld-fill{height:100%;background:var(--gold);border-radius:3px;animation:ldFill 1.4s ease forwards}
+@keyframes ldFill{from{width:0}to{width:100%}}
+/* HEADER */
+#hdr{position:fixed;top:0;left:0;right:0;z-index:1000;transition:var(--tr)}
+#hdr.top{background:linear-gradient(to bottom,rgba(9,20,42,.88),transparent)}
+#hdr.sc{background:var(--navy);box-shadow:0 2px 20px rgba(0,0,0,.3)}
+.nav-w{display:flex;align-items:center;justify-content:space-between;height:60px}
+@media(min-width:768px){.nav-w{height:70px}}
+.logo{display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0}
+.logo-ic{width:34px;height:34px;background:var(--gold);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.logo-nm span:first-child{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:#fff;display:block;line-height:1.1}
+.logo-nm span:last-child{font-size:.55rem;color:var(--gold);letter-spacing:2px;text-transform:uppercase}
+.nav-ul{display:none;list-style:none;align-items:center;gap:2px}
+@media(min-width:1024px){.nav-ul{display:flex}}
+.nav-ul>li{position:relative}
+.nav-ul>li>a{display:flex;align-items:center;gap:4px;padding:8px 10px;color:rgba(255,255,255,.9);font-size:.82rem;font-weight:500;border-radius:6px;transition:var(--tr)}
+.nav-ul>li>a:hover{color:var(--gold);background:rgba(255,255,255,.06)}
+.ndd{position:absolute;top:calc(100% + 8px);left:0;background:#fff;border-radius:12px;box-shadow:var(--shlg);min-width:200px;padding:8px;opacity:0;visibility:hidden;transform:translateY(-8px);transition:var(--tr);border:1px solid var(--bdr)}
+.nav-ul>li:hover .ndd{opacity:1;visibility:visible;transform:translateY(0)}
+.ndd a{display:block;padding:8px 12px;color:var(--text);font-size:.82rem;border-radius:7px;transition:var(--tr)}
+.ndd a:hover{background:var(--lg);color:var(--navy);padding-left:16px}
+.nav-r{display:flex;align-items:center;gap:10px}
+.nav-ph{display:none;color:rgba(255,255,255,.75);font-size:.78rem;align-items:center;gap:5px}
+@media(min-width:1024px){.nav-ph{display:flex}}
+.nav-ph b{color:var(--gold)}
+.nav-book{display:none}@media(min-width:768px){.nav-book{display:inline-flex}}
+.hmb{display:flex;flex-direction:column;gap:5px;background:none;padding:8px;margin-right:-8px}
+@media(min-width:1024px){.hmb{display:none}}
+.hmb span{display:block;width:22px;height:2px;background:#fff;border-radius:2px}
+.mob-nav{position:fixed;top:60px;left:0;right:0;background:var(--navy);display:none;flex-direction:column;gap:2px;max-height:calc(100vh - 60px);overflow-y:auto;z-index:999;padding:12px 16px 20px;border-top:1px solid rgba(255,255,255,.08)}
+@media(min-width:768px){.mob-nav{top:70px}}
+.mob-nav.on{display:flex}
+.mob-nav a{padding:11px 14px;color:rgba(255,255,255,.85);font-size:.9rem;border-radius:8px;transition:var(--tr)}
+.mob-nav a:hover{background:rgba(255,255,255,.08);color:var(--gold)}
+.mob-nav .mdiv{height:1px;background:rgba(255,255,255,.08);margin:5px 0}
+.mob-cta{background:var(--gold)!important;color:var(--navy)!important;text-align:center;font-weight:700!important;margin-top:4px}
+/* HERO */
+#hero{position:relative;height:100svh;min-height:560px;max-height:900px;overflow:hidden;display:flex;align-items:center}
+.hs{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.5s ease}
+.hs::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(9,20,42,.85) 0%,rgba(9,20,42,.4) 60%,rgba(9,20,42,.12) 100%)}
+.hs.on{opacity:1}
+.hc{position:relative;z-index:2;max-width:680px;padding-top:60px}
+@media(min-width:768px){.hc{padding-top:70px}}
+.h-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(200,168,75,.18);border:1px solid rgba(200,168,75,.4);color:var(--gold);padding:4px 12px;border-radius:20px;font-size:.68rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px}
+.h-title{font-size:clamp(1.7rem,5vw,3.6rem);color:#fff;line-height:1.2;margin-bottom:12px}
+.h-title em{font-style:italic;color:var(--gold)}
+.h-desc{font-size:.88rem;color:rgba(255,255,255,.82);margin-bottom:26px;max-width:500px;line-height:1.75;display:none}
+@media(min-width:480px){.h-desc{display:block}}
+@media(min-width:768px){.h-desc{font-size:.96rem;margin-bottom:32px}}
+.h-acts{display:flex;gap:10px;flex-wrap:wrap}
+.h-dots{position:absolute;right:20px;bottom:180px;z-index:3;display:none;flex-direction:column;gap:8px}
+@media(min-width:768px){.h-dots{display:flex;right:32px}}
+.h-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.35);cursor:pointer;transition:var(--tr)}
+.h-dot.on{background:var(--gold);height:20px;border-radius:4px}
+.srch{position:absolute;bottom:0;left:0;right:0;z-index:3}
+.srch-in{background:#fff;border-radius:14px 14px 0 0;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+@media(min-width:640px){.srch-in{flex-direction:row;flex-wrap:wrap;align-items:flex-end;padding:18px 24px;gap:12px;border-radius:16px 16px 0 0}}
+@media(min-width:1024px){.srch-in{flex-wrap:nowrap;padding:20px 32px}}
+.sf{flex:1;min-width:130px;display:flex;flex-direction:column;gap:4px}
+.sf label{font-size:.64rem;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.5px}
+.sf select{border:1.5px solid var(--bdr);border-radius:8px;padding:8px 10px;font-size:.84rem;color:var(--text);background:var(--lg);width:100%;transition:var(--tr)}
+.sf select:focus{border-color:var(--gold);background:#fff}
+.srch-bw{width:100%}@media(min-width:640px){.srch-bw{width:auto;flex-shrink:0}}
+/* STATS */
+#stats{background:var(--navy);padding:20px 0}@media(min-width:768px){#stats{padding:28px 0}}
+.sg{display:grid;grid-template-columns:repeat(2,1fr)}@media(min-width:640px){.sg{grid-template-columns:repeat(4,1fr)}}
+.si{text-align:center;padding:12px 10px;border-right:1px solid rgba(255,255,255,.1);border-bottom:1px solid rgba(255,255,255,.08)}
+@media(min-width:640px){.si{border-bottom:none;padding:14px 20px}}
+.si:nth-child(2n){border-right:none}@media(min-width:640px){.si:nth-child(2n){border-right:1px solid rgba(255,255,255,.1)}.si:last-child{border-right:none}}
+.sn{font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--gold);font-weight:700}@media(min-width:768px){.sn{font-size:2rem}}
+.sl{font-size:.65rem;color:rgba(255,255,255,.55);margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+/* PACKAGES */
+#pkgs{background:var(--cream)}
+.ftabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px}
+.ft{padding:6px 14px;border-radius:22px;border:1.5px solid var(--bdr);background:#fff;font-size:.78rem;font-weight:500;color:var(--gray);transition:var(--tr);cursor:pointer;white-space:nowrap}
+.ft:hover,.ft.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.pkg-grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:480px){.pkg-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1024px){.pkg-grid{grid-template-columns:repeat(3,1fr);gap:22px}}
+.pkg-card{background:#fff;border-radius:var(--rl);overflow:hidden;box-shadow:var(--sh);transition:var(--tr);display:flex;flex-direction:column}
+@media(min-width:768px){.pkg-card:hover{transform:translateY(-5px);box-shadow:var(--shlg)}}
+.pi{position:relative;height:180px;overflow:hidden;cursor:pointer}@media(min-width:768px){.pi{height:195px}}
+.pi img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
+.pkg-card:hover .pi img{transform:scale(1.05)}
+.pi .badge{position:absolute;top:10px;left:10px}
+.pi-dur{position:absolute;top:10px;right:10px;background:rgba(9,20,42,.82);color:#fff;padding:3px 8px;border-radius:5px;font-size:.68rem;font-weight:500}
+.pi-ov{position:absolute;inset:0;background:rgba(9,20,42,0);display:flex;align-items:center;justify-content:center;transition:var(--tr)}
+.pi:hover .pi-ov{background:rgba(9,20,42,.35)}
+.pi-ov span{background:var(--gold);color:var(--navy);padding:6px 16px;border-radius:6px;font-size:.75rem;font-weight:700;opacity:0;transform:translateY(6px);transition:var(--tr)}
+.pi:hover .pi-ov span{opacity:1;transform:translateY(0)}
+.pb{padding:14px;flex:1;display:flex;flex-direction:column}@media(min-width:768px){.pb{padding:18px}}
+.pn{font-size:1rem;font-weight:600;color:var(--navy);margin-bottom:4px;cursor:pointer;line-height:1.3}
+.pn:hover{color:var(--gold)}
+.pd{font-size:.8rem;color:var(--gray);margin-bottom:10px;flex:1;line-height:1.6}
+.ptags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.ptag{background:var(--lg);color:var(--text);padding:2px 8px;border-radius:4px;font-size:.68rem}
+.pf{display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--bdr);gap:8px}
+.pp label{font-size:.64rem;color:var(--gray);display:block}
+.pp strong{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--navy)}
+.pp span{font-size:.66rem;color:var(--gray)}
+.pkg-btns{display:flex;gap:6px;flex-shrink:0}
+/* DESTINATIONS */
+#dest{background:#fff}
+.dg{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:480px){.dg{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:768px){.dg{grid-template-columns:repeat(3,1fr);gap:16px}}
+.dc{position:relative;border-radius:var(--rl);overflow:hidden;cursor:pointer;height:200px}
+@media(min-width:480px){.dc{height:220px}}@media(min-width:768px){.dc{height:255px}}
+.dc.big{grid-column:1/-1}@media(min-width:480px){.dc.big{height:250px}}@media(min-width:768px){.dc.big{grid-column:span 2;height:320px}}
+.dc img{width:100%;height:100%;object-fit:cover;transition:transform .6s}
+.dc:hover img{transform:scale(1.05)}
+.dov{position:absolute;inset:0;background:linear-gradient(to top,rgba(9,20,42,.92) 0%,rgba(9,20,42,.05) 55%);display:flex;flex-direction:column;justify-content:flex-end;padding:14px}
+@media(min-width:768px){.dov{padding:20px}}
+.dn{font-size:1rem;color:#fff;font-weight:600;margin-bottom:3px}@media(min-width:768px){.dn{font-size:1.15rem}}
+.dd2{font-size:.74rem;color:rgba(255,255,255,.72);margin-bottom:8px;display:none}
+@media(min-width:480px){.dd2{display:block;opacity:0;transform:translateY(6px);transition:var(--tr)}}
+.dc:hover .dd2{opacity:1;transform:translateY(0)}
+.de{display:inline-flex;align-items:center;gap:4px;color:var(--gold);font-size:.72rem;font-weight:600;background:rgba(200,168,75,.15);padding:3px 10px;border-radius:5px;border:1px solid rgba(200,168,75,.3);transition:var(--tr)}
+.dc:hover .de{background:var(--gold);color:var(--navy)}
+/* ACTIVITIES */
+#acts{background:var(--cream)}
+.ag{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:640px){.ag{grid-template-columns:repeat(3,1fr);gap:14px}}
+@media(min-width:1024px){.ag{grid-template-columns:repeat(4,1fr);gap:18px}}
+.ac{background:#fff;border-radius:var(--r);padding:18px 14px;text-align:center;transition:var(--tr);border:1.5px solid var(--bdr)}
+@media(min-width:768px){.ac{padding:24px 18px}.ac:hover{border-color:var(--gold);box-shadow:var(--sh);transform:translateY(-3px)}}
+.ai{width:48px;height:48px;background:linear-gradient(135deg,var(--navy),var(--blue));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin:0 auto 10px}
+@media(min-width:768px){.ai{width:58px;height:58px;font-size:1.5rem;margin-bottom:13px}}
+.an{font-size:.85rem;font-weight:600;color:var(--navy);margin-bottom:4px}
+.adesc{font-size:.72rem;color:var(--gray);line-height:1.5}
+/* HOTELS */
+#hotels{background:#fff}
+.hg{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:480px){.hg{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1024px){.hg{grid-template-columns:repeat(4,1fr);gap:20px}}
+.hcard{border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);transition:var(--tr);background:#fff;border:1px solid var(--bdr)}
+@media(min-width:768px){.hcard:hover{transform:translateY(-4px);box-shadow:var(--shlg)}}
+.hi{height:160px;position:relative;overflow:hidden}@media(min-width:768px){.hi{height:170px}}
+.hi img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
+.hcard:hover .hi img{transform:scale(1.05)}
+.hi .badge{position:absolute;top:8px;right:8px}
+.hb{padding:12px}@media(min-width:768px){.hb{padding:14px}}
+.hn{font-size:.9rem;font-weight:600;color:var(--navy);margin-bottom:2px}
+.hloc{font-size:.72rem;color:var(--gray);margin-bottom:4px}
+.hstars{color:#f59e0b;font-size:.75rem;margin-bottom:5px}
+.ham{font-size:.7rem;color:var(--gray);margin-bottom:8px;line-height:1.5}
+.hft{display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid var(--bdr)}
+.hpr{font-size:1rem;font-weight:700;color:var(--navy)}.hpr span{font-size:.64rem;color:var(--gray);font-weight:400}
+/* CARS */
+#cars{background:var(--cream)}
+.cg{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(min-width:1024px){.cg{grid-template-columns:repeat(4,1fr);gap:20px}}
+.ccard{background:#fff;border-radius:var(--r);padding:0;text-align:center;box-shadow:var(--sh);transition:var(--tr);border:1px solid var(--bdr);overflow:hidden}
+@media(min-width:768px){.ccard:hover{transform:translateY(-3px);box-shadow:var(--shlg)}}
+.car-img-wrap{height:120px;position:relative;overflow:hidden;background:var(--lg);display:flex;align-items:center;justify-content:center}
+.car-img-wrap img{width:100%;height:100%;object-fit:cover}
+.car-img-wrap .car-emoji{font-size:3rem}
+.ccard-body{padding:12px}@media(min-width:768px){.ccard-body{padding:16px}}
+.ct{display:inline-block;padding:2px 8px;background:var(--lg);border-radius:4px;font-size:.62rem;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:6px}
+.cn{font-size:.82rem;font-weight:600;color:var(--navy);margin-bottom:7px}
+.csp{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.csp span{font-size:.64rem;color:var(--gray)}
+.cp{font-size:1.1rem;font-weight:700;color:var(--navy);margin-bottom:10px}
+.cp small{font-size:.65rem;color:var(--gray);font-weight:400}
+/* WHY */
+#why{background:linear-gradient(135deg,var(--navy),var(--blue));padding:56px 0}@media(min-width:768px){#why{padding:72px 0}}
+.wg{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}@media(min-width:1024px){.wg{grid-template-columns:repeat(4,1fr)}}
+.wi{text-align:center}
+.wic{width:56px;height:56px;background:rgba(200,168,75,.14);border:2px solid rgba(200,168,75,.28);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto 12px}
+.wt{font-size:.92rem;color:#fff;margin-bottom:5px}.wd{font-size:.76rem;color:rgba(255,255,255,.58);line-height:1.65}
+/* TESTIMONIALS */
+#testi{background:#fff}
+.tg{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:640px){.tg{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1024px){.tg{grid-template-columns:repeat(3,1fr);gap:22px}}
+.tcard{background:var(--lg);border-radius:var(--rl);padding:20px;border:1px solid var(--bdr);transition:var(--tr)}
+.tcard:hover{border-color:var(--gold);box-shadow:var(--sh)}
+.tstars{color:#f59e0b;font-size:.85rem;margin-bottom:8px}
+.ttxt{font-size:.84rem;color:var(--text);line-height:1.72;margin-bottom:14px;font-style:italic}
+.tau{display:flex;align-items:center;gap:10px}
+.tav{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--blue));display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:.9rem;font-weight:700;flex-shrink:0}
+.tnm{font-size:.85rem;font-weight:600;color:var(--navy)}.tfr{font-size:.7rem;color:var(--gray)}
+/* ENQUIRY */
+#enq{background:linear-gradient(135deg,var(--cream),#fff)}
+.eq-w{display:grid;grid-template-columns:1fr;gap:28px}
+@media(min-width:900px){.eq-w{grid-template-columns:1fr 1.2fr;gap:52px}}
+.eq-info h2{font-size:1.5rem;color:var(--navy);margin-bottom:12px}@media(min-width:768px){.eq-info h2{font-size:1.8rem}}
+.eq-info p{color:var(--gray);font-size:.88rem;margin-bottom:22px;line-height:1.75}
+.ci-list{display:flex;flex-direction:column;gap:12px}
+.ci{display:flex;align-items:center;gap:10px}
+.ci-ic{width:38px;height:38px;background:var(--navy);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
+.ci-tx b{display:block;font-size:.68rem;color:var(--gray);text-transform:uppercase;font-weight:600}
+.ci-tx a,.ci-tx span{font-size:.86rem;color:var(--text);font-weight:500}
+.eq-form{background:#fff;border-radius:var(--rl);padding:22px;box-shadow:var(--shlg);border:1px solid var(--bdr)}
+@media(min-width:640px){.eq-form{padding:30px}}
+.eq-form h3{font-size:1.2rem;color:var(--navy);margin-bottom:18px}
+.fg{display:grid;grid-template-columns:1fr;gap:11px}
+@media(min-width:480px){.fg{grid-template-columns:1fr 1fr;gap:12px}}
+.fld{display:flex;flex-direction:column;gap:4px}.fld.full{grid-column:1/-1}
+.fld label{font-size:.68rem;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.3px}
+.fld input,.fld select,.fld textarea{border:1.5px solid var(--bdr);border-radius:7px;padding:9px 11px;font-size:.86rem;color:var(--text);background:var(--lg);transition:var(--tr);width:100%}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--gold);background:#fff}
+.fld textarea{resize:vertical;min-height:75px}
+/* FOOTER */
+footer{background:#050e1d;color:rgba(255,255,255,.68);padding:40px 0 0}@media(min-width:768px){footer{padding:56px 0 0}}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-bottom:32px}
+@media(min-width:768px){.fg2{grid-template-columns:1.5fr 1fr 1fr 1.2fr;gap:40px;margin-bottom:44px}}
+.fb{grid-column:1/-1}@media(min-width:768px){.fb{grid-column:auto}}
+.fb p{font-size:.8rem;line-height:1.75;max-width:260px;margin-top:12px}
+.fsoc{display:flex;gap:8px;margin-top:14px}
+.fsb{width:32px;height:32px;background:rgba(255,255,255,.08);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.85rem;transition:var(--tr);cursor:pointer}
+.fsb:hover{background:var(--gold);color:var(--navy)}
+.fc h4{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#fff;margin-bottom:12px}
+.flinks{list-style:none;display:flex;flex-direction:column;gap:6px}
+.flinks li a{font-size:.78rem;color:rgba(255,255,255,.55);transition:var(--tr)}
+.flinks li a:hover{color:var(--gold)}
+.fct{display:flex;flex-direction:column;gap:8px}
+.fci{display:flex;gap:8px;font-size:.78rem;align-items:flex-start}
+.fci .ico{font-size:.85rem;margin-top:1px;flex-shrink:0}
+.fbot{border-top:1px solid rgba(255,255,255,.07);padding:14px 0;display:flex;flex-direction:column;gap:8px;font-size:.74rem;align-items:center;text-align:center}
+@media(min-width:640px){.fbot{flex-direction:row;justify-content:space-between}}
+.fbot-l{display:flex;gap:16px}
+.fbot-l a{color:rgba(255,255,255,.45);transition:var(--tr)}.fbot-l a:hover{color:var(--gold)}
+/* FLOATS */
+.wa{position:fixed;bottom:20px;right:16px;z-index:100;width:46px;height:46px;background:#25d366;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 4px 16px rgba(37,211,102,.4);text-decoration:none;animation:waP 2.5s infinite}
+@media(min-width:768px){.wa{bottom:26px;right:26px;width:52px;height:52px;font-size:1.5rem}}
+@keyframes waP{0%,100%{box-shadow:0 4px 16px rgba(37,211,102,.4)}50%{box-shadow:0 4px 28px rgba(37,211,102,.7)}}
+.sct{position:fixed;bottom:20px;left:16px;z-index:100;width:38px;height:38px;background:var(--navy);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;cursor:pointer;opacity:0;pointer-events:none;transition:var(--tr)}
+@media(min-width:768px){.sct{bottom:26px;left:26px;width:42px;height:42px}}
+.sct.vis{opacity:1;pointer-events:all}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(80px);background:#10b981;color:#fff;padding:10px 20px;border-radius:8px;font-size:.84rem;font-weight:500;z-index:9999;transition:transform .3s;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.on{transform:translateX(-50%) translateY(0)}
+/* MODALS */
+.ov{position:fixed;inset:0;z-index:5000;display:none;align-items:flex-start;justify-content:center;background:rgba(5,14,29,.9);padding:10px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+@media(min-width:640px){.ov{padding:16px}}
+.ov.on{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;margin:auto;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+@media(min-width:640px){.modal{border-radius:20px}}
+.mhdr{background:var(--navy);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-radius:14px 14px 0 0;gap:8px}
+@media(min-width:640px){.mhdr{padding:16px 24px;border-radius:20px 20px 0 0}}
+.mhdr h3{font-family:'Inter',sans-serif;font-size:.85rem;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mclose{background:rgba(255,255,255,.1);color:#fff;width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0}
+.mclose:hover{background:#ef4444}
+.mbody{padding:16px}@media(min-width:640px){.mbody{padding:22px}}@media(min-width:768px){.mbody{padding:26px}}
+/* PKG DETAIL */
+.pdm-hero{position:relative;height:200px;border-radius:12px;overflow:hidden;margin-bottom:16px}
+@media(min-width:480px){.pdm-hero{height:240px;margin-bottom:20px}}
+@media(min-width:768px){.pdm-hero{height:280px;border-radius:16px;margin-bottom:22px}}
+.pdm-hero img{width:100%;height:100%;object-fit:cover}
+.pdm-ho{position:absolute;inset:0;background:linear-gradient(to top,rgba(9,20,42,.92),rgba(9,20,42,.08));display:flex;flex-direction:column;justify-content:flex-end;padding:16px}
+@media(min-width:640px){.pdm-ho{padding:22px}}
+.pdm-ho h2{font-size:1.3rem;color:#fff;margin-bottom:5px}@media(min-width:640px){.pdm-ho h2{font-size:1.7rem}}
+.pdm-meta{display:flex;gap:8px;flex-wrap:wrap}
+.pdm-met{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);color:#fff;padding:3px 9px;border-radius:5px;font-size:.7rem}
+.pdm-tabs{display:flex;gap:2px;margin-bottom:18px;background:var(--lg);border-radius:9px;padding:3px}
+.pdt{flex:1;padding:8px 4px;border-radius:7px;font-size:.72rem;font-weight:600;color:var(--gray);text-align:center;transition:var(--tr);cursor:pointer}
+@media(min-width:480px){.pdt{font-size:.8rem;padding:9px 8px}}
+.pdt.on{background:#fff;color:var(--navy);box-shadow:var(--sh)}
+.ptab{display:none}.ptab.on{display:block}
+.pdm-ov p{font-size:.86rem;color:var(--gray);line-height:1.78;margin-bottom:16px}
+.pdm-hls{display:grid;grid-template-columns:1fr;gap:8px}@media(min-width:480px){.pdm-hls{grid-template-columns:repeat(2,1fr)}}
+.pdm-hl{display:flex;align-items:flex-start;gap:9px;background:var(--lg);border-radius:9px;padding:10px 12px}
+.pdm-hl .ico{font-size:1rem;flex-shrink:0;margin-top:1px}.pdm-hl span{font-size:.8rem}
+.itin{display:flex;flex-direction:column}
+.it-day{border-left:2px solid var(--bdr);margin-left:13px;padding:0 0 16px 18px;position:relative}
+.it-day:last-child{border-left-color:transparent;padding-bottom:0}
+.it-dot{width:24px;height:24px;background:var(--navy);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:.65rem;font-weight:700;position:absolute;left:-13px;top:0;flex-shrink:0}
+.it-title{font-size:.86rem;font-weight:700;color:var(--navy);margin-bottom:4px}
+.it-desc{font-size:.8rem;color:var(--gray);line-height:1.7}
+.inc-grid{display:grid;grid-template-columns:1fr;gap:18px}@media(min-width:480px){.inc-grid{grid-template-columns:1fr 1fr}}
+.inc-col h4{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.inc-col.yes h4{color:#059669}.inc-col.no h4{color:#dc2626}
+.inc-list{list-style:none;display:flex;flex-direction:column;gap:7px}
+.inc-list li{display:flex;align-items:flex-start;gap:7px;font-size:.8rem}
+.inc-col.yes .inc-list li::before{content:'✓';color:#059669;font-weight:700;flex-shrink:0}
+.inc-col.no .inc-list li::before{content:'✗';color:#dc2626;font-weight:700;flex-shrink:0}
+.pdm-foot{background:var(--lg);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;margin-top:18px}
+@media(min-width:480px){.pdm-foot{flex-direction:row;align-items:center;justify-content:space-between;padding:16px 20px}}
+.pdm-price{font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--navy)}
+.pdm-price small{font-size:.72rem;color:var(--gray);font-weight:400;font-family:'Inter',sans-serif}
+.pdm-acts{display:flex;gap:8px;flex-wrap:wrap}
+/* DEST DETAIL */
+.ddm-hero{position:relative;height:220px;border-radius:12px;overflow:hidden;margin-bottom:18px}
+@media(min-width:480px){.ddm-hero{height:260px}}@media(min-width:768px){.ddm-hero{height:310px;border-radius:16px;margin-bottom:22px}}
+.ddm-hero img{width:100%;height:100%;object-fit:cover}
+.ddm-ho{position:absolute;inset:0;background:linear-gradient(to top,rgba(9,20,42,.95),rgba(9,20,42,.08));display:flex;flex-direction:column;justify-content:flex-end;padding:18px}
+@media(min-width:640px){.ddm-ho{padding:26px}}
+.ddm-ho h2{font-size:1.5rem;color:#fff;margin-bottom:3px}@media(min-width:640px){.ddm-ho h2{font-size:1.9rem}}
+.ddm-tl{font-size:.8rem;color:rgba(255,255,255,.75);font-style:italic;margin-bottom:8px}
+.dchips{display:flex;gap:6px;flex-wrap:wrap}
+.dchip{background:rgba(200,168,75,.2);border:1px solid rgba(200,168,75,.4);color:var(--gold);padding:3px 9px;border-radius:4px;font-size:.68rem;font-weight:600}
+.ddm-about{font-size:.85rem;color:var(--gray);line-height:1.8;margin-bottom:20px}
+.ddm-grid{display:grid;grid-template-columns:1fr;gap:20px;margin-bottom:18px}@media(min-width:640px){.ddm-grid{grid-template-columns:1fr 1fr}}
+.ddm-sec h4{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--navy);margin-bottom:10px;padding-bottom:5px;border-bottom:2px solid var(--gold);display:inline-block}
+.dattr-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}@media(min-width:480px){.dattr-grid{grid-template-columns:1fr 1fr}}
+.dattr{background:var(--lg);border-radius:8px;padding:10px 12px;display:flex;align-items:flex-start;gap:8px}
+.dattr .ico{font-size:1rem;flex-shrink:0;margin-top:1px}
+.dattr strong{display:block;font-size:.8rem;color:var(--navy);margin-bottom:1px}
+.dattr span{font-size:.72rem;color:var(--gray)}
+.dinfo{list-style:none;display:flex;flex-direction:column;gap:9px;margin-top:10px}
+.dinfo li{font-size:.82rem}.dinfo li strong{display:block;color:var(--navy);font-size:.75rem}
+.ddm-cta{background:linear-gradient(135deg,var(--navy),var(--blue));border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:12px;margin-top:16px}
+@media(min-width:640px){.ddm-cta{flex-direction:row;align-items:center;justify-content:space-between;padding:18px 22px}}
+.ddm-cta h4{color:#fff;font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700}
+.ddm-cta p{color:rgba(255,255,255,.7);font-size:.8rem;margin-top:2px}
+.ddm-cta-btns{display:flex;gap:8px;flex-wrap:wrap}
+/* BOOK MODAL */
+.bchoice{display:grid;grid-template-columns:1fr;gap:12px}@media(min-width:480px){.bchoice{grid-template-columns:1fr 1fr}}
+.bc{border:2px solid var(--bdr);border-radius:12px;padding:18px 14px;text-align:center;cursor:pointer;transition:var(--tr)}
+.bc:hover{border-color:var(--gold);box-shadow:var(--sh)}
+.bc .bci{font-size:2rem;margin-bottom:8px}
+.bc h4{font-size:.88rem;color:var(--navy);margin-bottom:4px}.bc p{font-size:.74rem;color:var(--gray)}
+.bc.pri{border-color:var(--gold);background:rgba(200,168,75,.05)}
+.bsteps{display:flex;margin-bottom:18px;border-radius:8px;overflow:hidden;border:1px solid var(--bdr)}
+.bstep{flex:1;padding:8px 4px;text-align:center;font-size:.66rem;font-weight:600;color:var(--gray);background:var(--lg);transition:var(--tr)}
+@media(min-width:480px){.bstep{padding:9px 6px;font-size:.72rem}}
+.bstep.on{background:var(--navy);color:#fff}.bstep.done{background:rgba(16,185,129,.12);color:#059669}
+.bfg{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:10px}
+@media(min-width:480px){.bfg{grid-template-columns:1fr 1fr;gap:12px}}
+.bfg .full{grid-column:1/-1}
+.bf{display:flex;flex-direction:column;gap:4px}
+.bf label{font-size:.66rem;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.3px}
+.bf input,.bf select,.bf textarea{border:1.5px solid var(--bdr);border-radius:7px;padding:8px 10px;font-size:.84rem;color:var(--text);background:var(--lg);transition:var(--tr);width:100%}
+.bf input:focus,.bf select:focus,.bf textarea:focus{border-color:var(--gold);background:#fff}
+.bf textarea{resize:vertical;min-height:60px}
+.tr-note{background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.3);border-radius:8px;padding:10px 12px;font-size:.78rem;color:var(--navy)}
+.popts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.po{border:2px solid var(--bdr);border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;transition:var(--tr)}
+.po:hover{border-color:var(--gold)}.po.sel{border-color:var(--gold);background:rgba(200,168,75,.08)}
+.po .pct{font-size:1.2rem;font-weight:700;color:var(--navy);font-family:'Playfair Display',serif}
+@media(min-width:480px){.po .pct{font-size:1.5rem}}
+.po .plbl{font-size:.65rem;color:var(--gray);margin-top:2px}.po .pamt{font-size:.8rem;font-weight:700;color:var(--gold);margin-top:5px}
+.pnote{background:var(--lg);border-radius:8px;padding:10px 14px;font-size:.78rem;color:var(--gray);margin-bottom:18px;border-left:3px solid var(--gold)}
+.qrbox{text-align:center;padding:8px 0}
+.qrimg{width:160px;height:160px;border:3px solid var(--bdr);border-radius:12px;margin:0 auto 12px;object-fit:contain}
+@media(min-width:480px){.qrimg{width:190px;height:190px}}
+.qrupi{background:var(--lg);border-radius:8px;padding:8px 14px;font-size:.78rem;color:var(--navy);font-weight:600;text-align:center;margin-bottom:12px;word-break:break-all}
+.pmethods{display:flex;justify-content:center;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.pm{background:var(--lg);border-radius:7px;padding:5px 10px;font-size:.7rem;font-weight:600;color:var(--navy);border:1px solid var(--bdr)}
+.psum{background:linear-gradient(135deg,var(--navy),var(--blue));border-radius:12px;padding:14px 16px;color:#fff;margin-bottom:16px}
+.psum .pr{display:flex;justify-content:space-between;font-size:.8rem;padding:3px 0}
+.psum .pt{display:flex;justify-content:space-between;font-size:1rem;font-weight:700;padding-top:9px;border-top:1px solid rgba(255,255,255,.2);margin-top:7px}
+.psum .pt span:last-child{color:var(--gold)}
+.conf{text-align:center;padding:16px 0}
+.conf-ic{font-size:3.5rem;margin-bottom:12px}
+.conf h3{font-size:1.2rem;color:var(--navy);margin-bottom:7px}
+.conf p{font-size:.84rem;color:var(--gray);margin-bottom:16px}
+.conf-ref{background:var(--lg);border-radius:8px;padding:9px 16px;font-size:.86rem;font-weight:700;color:var(--navy);display:inline-block}
+/* ADMIN */
+#adm-ov{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;background:rgba(5,14,29,.93);padding:12px}
+#adm-ov.on{display:flex}
+.adm-pan{background:#fff;border-radius:16px;width:100%;max-width:1100px;max-height:93vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.55)}
+.adm-li{padding:28px 20px;display:flex;flex-direction:column;align-items:center;width:100%;max-width:340px;margin:0 auto}
+@media(min-width:480px){.adm-li{padding:40px}}
+.adm-logo{width:48px;height:48px;background:var(--navy);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:16px}
+.adm-li h2{font-size:1.3rem;color:var(--navy);margin-bottom:4px}
+.adm-li>p{font-size:.8rem;color:var(--gray);margin-bottom:22px;text-align:center}
+.afg{width:100%;margin-bottom:11px}
+.afg label{display:block;font-size:.68rem;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:4px}
+.afg input{width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:10px 12px;font-size:.86rem;transition:var(--tr)}
+.afg input:focus{border-color:var(--gold)}
+.aerr{color:#ef4444;font-size:.78rem;margin-bottom:10px;display:none;width:100%}
+#adm-dash{display:none;flex-direction:column;flex:1;overflow:hidden;height:100%}
+.adm-hdr{background:var(--navy);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px}
+.adm-hdr h3{font-family:'Inter',sans-serif;font-size:.82rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm-tabs{display:flex;gap:2px;overflow-x:auto}
+.at{padding:5px 10px;border-radius:6px;font-size:.72rem;font-weight:500;color:rgba(255,255,255,.6);background:transparent;transition:var(--tr);white-space:nowrap}
+.at:hover{color:#fff;background:rgba(255,255,255,.1)}.at.on{background:var(--gold);color:var(--navy)}
+.adm-x{background:rgba(255,255,255,.1);color:#fff;padding:5px 10px;border-radius:6px;font-size:.72rem;flex-shrink:0}
+.adm-x:hover{background:#ef4444}
+.adm-body{overflow-y:auto;padding:16px;flex:1;-webkit-overflow-scrolling:touch}
+@media(min-width:640px){.adm-body{padding:20px}}
+.adm-sec{display:none}.adm-sec.on{display:block}
+.atbl-w{overflow-x:auto;margin-top:12px;-webkit-overflow-scrolling:touch}
+.atbl{width:100%;border-collapse:collapse;font-size:.78rem;min-width:480px}
+.atbl th{background:var(--lg);padding:8px 12px;text-align:left;font-weight:700;color:var(--gray);font-size:.68rem;text-transform:uppercase;white-space:nowrap}
+.atbl td{padding:10px 12px;border-bottom:1px solid var(--bdr);vertical-align:middle}
+.atbl tr:hover td{background:#fafafa}
+.aeb{background:var(--navy);color:#fff;padding:4px 10px;border-radius:5px;font-size:.72rem;margin-right:4px;cursor:pointer;border:none}
+.aeb:hover{background:var(--blue)}
+.aef{background:var(--lg);border-radius:10px;padding:16px;margin-top:12px;display:none}
+@media(min-width:640px){.aef{padding:20px}}
+.aef.on{display:block}
+.aef>h4{font-size:.95rem;color:var(--navy);margin-bottom:12px}
+.apdt-row{display:flex;gap:2px;background:var(--bdr);border-radius:8px;padding:3px;margin-bottom:14px;flex-wrap:wrap}
+.apdt{flex:1;min-width:80px;padding:7px 4px;border-radius:6px;font-size:.7rem;font-weight:600;color:var(--gray);text-align:center;cursor:pointer;background:transparent;border:none;transition:var(--tr)}
+.apdt.on{background:#fff;color:var(--navy);box-shadow:var(--sh)}
+.aptab{display:none}.aptab.on{display:block}
+.afr{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:480px){.afr{grid-template-columns:1fr 1fr;gap:11px}}
+.afl{display:flex;flex-direction:column;gap:3px}.afl.full{grid-column:1/-1}
+.afl label{font-size:.68rem;font-weight:700;color:var(--gray);text-transform:uppercase}
+.afl .htxt{font-size:.64rem;color:var(--gray);margin-bottom:3px}
+.afl input,.afl select,.afl textarea{border:1.5px solid var(--bdr);border-radius:7px;padding:7px 10px;font-size:.83rem;background:#fff;transition:var(--tr);width:100%}
+.afl input:focus,.afl select:focus,.afl textarea:focus{border-color:var(--gold)}
+.afl textarea{resize:vertical;min-height:55px}
+.afact{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.btn-sv{background:#10b981;color:#fff;padding:7px 16px;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer;border:none}
+.btn-sv:hover{background:#059669}
+.btn-cx{background:var(--lg);color:var(--gray);padding:7px 16px;border-radius:6px;font-size:.8rem;cursor:pointer;border:none}
+.aab{display:inline-flex;align-items:center;gap:5px;background:var(--gold);color:var(--navy);padding:6px 14px;border-radius:7px;font-size:.76rem;font-weight:700;cursor:pointer;border:none}
+.aab:hover{background:var(--gold2)}
+.ov-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+@media(min-width:640px){.ov-cards{grid-template-columns:repeat(4,1fr)}}
+.ovc{background:var(--lg);border-radius:10px;padding:14px;text-align:center}
+.ovc .num{font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--gold);font-weight:700}
+.ovc .lbl{font-size:.68rem;color:var(--gray);margin-top:2px;text-transform:uppercase}
+.hint{background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.3);border-radius:8px;padding:11px 14px;font-size:.78rem;color:var(--navy);margin-bottom:14px}
+.stg{display:grid;grid-template-columns:1fr;gap:11px}@media(min-width:480px){.stg{grid-template-columns:1fr 1fr}}
+.sf2{display:flex;flex-direction:column;gap:4px}.sf2.full{grid-column:1/-1}
+.sf2 label{font-size:.68rem;font-weight:700;color:var(--gray);text-transform:uppercase}
+.sf2 input{border:1.5px solid var(--bdr);border-radius:7px;padding:8px 11px;font-size:.86rem;transition:var(--tr);width:100%}
+.sf2 input:focus{border-color:var(--gold)}
+.fb-status{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;font-weight:600;padding:4px 10px;border-radius:5px;margin-left:8px}
+.fb-ok{background:#dcfce7;color:#15803d}.fb-err{background:#fee2e2;color:#991b1b}
+/* PHOTO UPLOAD */
+.photo-src-toggle{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.pst{padding:5px 12px;border-radius:6px;font-size:.72rem;font-weight:600;border:1.5px solid var(--bdr);background:#fff;color:var(--gray);cursor:pointer;transition:var(--tr)}
+.pst.on{border-color:var(--navy);background:var(--navy);color:#fff}
+.photo-preview{width:100%;height:100px;object-fit:cover;border-radius:7px;margin-top:6px;display:none;border:1px solid var(--bdr)}
+.photo-preview.vis{display:block}
+.upload-progress{height:4px;background:var(--bdr);border-radius:2px;overflow:hidden;margin-top:6px;display:none}
+.upload-progress.vis{display:block}
+.upload-progress-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .3s}
+.upload-area{border:2px dashed var(--bdr);border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:var(--tr);margin-top:6px}
+.upload-area:hover{border-color:var(--gold);background:rgba(200,168,75,.04)}
+.upload-area input[type=file]{display:none}
+.upload-area p{font-size:.76rem;color:var(--gray);margin-top:5px}
+</style>
+</head>
+<body>
+
+<div id="loader"><div class="ld-txt">Ishwar Holidays</div><div class="ld-sub">Jammu &amp; Kashmir</div><div class="ld-bar"><div class="ld-fill"></div></div></div>
+
+<header id="hdr" class="top"><div class="con"><nav class="nav-w">
+  <a class="logo" href="#hero"><div class="logo-ic">🏔️</div><div class="logo-nm"><span>Ishwar Holidays</span><span>Jammu &amp; Kashmir</span></div></a>
+  <ul class="nav-ul">
+    <li><a href="#pkgs">Packages ▾</a><div class="ndd"><a href="#pkgs">All Packages</a><a href="#pkgs" onclick="filterPkg('family')">Family Tours</a><a href="#pkgs" onclick="filterPkg('honeymoon')">Honeymoon</a><a href="#pkgs" onclick="filterPkg('adventure')">Adventure</a><a href="#pkgs" onclick="filterPkg('pilgrim')">Pilgrimage</a></div></li>
+    <li><a href="#dest">Destinations ▾</a><div class="ndd"><a href="#dest" onclick="openDest('srinagar')">Srinagar</a><a href="#dest" onclick="openDest('gulmarg')">Gulmarg</a><a href="#dest" onclick="openDest('pahalgam')">Pahalgam</a><a href="#dest" onclick="openDest('sonmarg')">Sonmarg</a><a href="#dest" onclick="openDest('katra')">Katra</a><a href="#dest" onclick="openDest('patnitop')">Patnitop</a></div></li>
+    <li><a href="#acts">Activities</a></li>
+    <li><a href="#hotels">Services ▾</a><div class="ndd"><a href="#hotels">Hotel Booking</a><a href="#cars">Car Rental</a><a href="#enq">Group Tours</a></div></li>
+    <li><a href="#why">About</a></li><li><a href="#enq">Contact</a></li>
+  </ul>
+  <div class="nav-r"><div class="nav-ph">📞 <b id="hdr-ph">+91-7889723200</b></div><a href="#enq" class="btn btn-gold btn-sm nav-book">Book Now</a><button class="hmb" onclick="toggleMob()"><span></span><span></span><span></span></button></div>
+</nav></div></header>
+
+<nav class="mob-nav" id="mob-nav">
+  <a href="#pkgs" onclick="closeMob()">📦 Packages</a><a href="#dest" onclick="closeMob()">🗺️ Destinations</a>
+  <a href="#acts" onclick="closeMob()">🏄 Activities</a><a href="#hotels" onclick="closeMob()">🏨 Hotels</a>
+  <a href="#cars" onclick="closeMob()">🚗 Car Rental</a><div class="mdiv"></div>
+  <a href="#why" onclick="closeMob()">ℹ️ About</a><a href="#enq" onclick="closeMob()">📞 Contact</a><div class="mdiv"></div>
+  <a href="#enq" class="mob-cta" onclick="closeMob()">🎟️ Book Now</a>
+</nav>
+
+<section id="hero">
+  <div class="hs on" style="background-image:url('https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?auto=format&fit=crop&w=1920&q=80')"></div>
+  <div class="hs" style="background-image:url('https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1920&q=80')"></div>
+  <div class="hs" style="background-image:url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1920&q=80')"></div>
+  <div class="con"><div class="hc">
+    <div class="h-tag">✦ Trusted Since 2005</div>
+    <h1 class="h-title">Discover <em>Heaven on Earth</em><br>in Jammu &amp; Kashmir</h1>
+    <p class="h-desc" id="hero-tagline">From the shimmering Dal Lake to the snow-capped peaks of Gulmarg — experience the unmatched beauty of J&amp;K with your trusted local travel partner.</p>
+    <div class="h-acts"><a href="#pkgs" class="btn btn-gold">Explore Packages</a><a href="#enq" class="btn btn-out">Plan My Trip</a></div>
+  </div></div>
+  <div class="h-dots" id="h-dots"></div>
+  <div class="srch"><div class="con"><div class="srch-in">
+    <div class="sf"><label>Destination</label><select><option>All Destinations</option><option>Srinagar</option><option>Gulmarg</option><option>Pahalgam</option><option>Sonmarg</option><option>Katra</option><option>Patnitop</option></select></div>
+    <div class="sf"><label>Duration</label><select><option>Any Duration</option><option>3 Days</option><option>4 Days</option><option>5 Days</option><option>7 Days</option><option>8+ Days</option></select></div>
+    <div class="sf"><label>Travel Month</label><select><option>Any Month</option><option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select></div>
+    <div class="sf"><label>Group Size</label><select><option>1-2 People</option><option>3-5 People</option><option>6-10 People</option><option>10+ People</option></select></div>
+    <div class="srch-bw"><button class="btn btn-gold" style="width:100%;justify-content:center" onclick="document.getElementById('enq').scrollIntoView({behavior:'smooth'})">🔍 Search</button></div>
+  </div></div></div>
+</section>
+
+<section id="stats"><div class="con"><div class="sg">
+  <div class="si"><div class="sn">5,000+</div><div class="sl">Happy Travellers</div></div>
+  <div class="si"><div class="sn">150+</div><div class="sl">Tour Packages</div></div>
+  <div class="si"><div class="sn">20+</div><div class="sl">Destinations</div></div>
+  <div class="si"><div class="sn">20 Yrs</div><div class="sl">Trusted Service</div></div>
+</div></div></section>
+
+<section id="pkgs" class="sec"><div class="con">
+  <div class="stitle">Popular <span class="gold">Tour Packages</span></div>
+  <p class="ssub">Handcrafted itineraries for every kind of traveller.</p>
+  <div class="ftabs">
+    <button class="ft on" onclick="filterPkg('all',this)">All</button>
+    <button class="ft" onclick="filterPkg('family',this)">Family</button>
+    <button class="ft" onclick="filterPkg('honeymoon',this)">Honeymoon</button>
+    <button class="ft" onclick="filterPkg('adventure',this)">Adventure</button>
+    <button class="ft" onclick="filterPkg('pilgrim',this)">Pilgrimage</button>
+  </div>
+  <div class="pkg-grid" id="pkg-grid"></div>
+</div></section>
+
+<section id="dest" class="sec"><div class="con">
+  <div class="stitle tc">Explore <span class="gold">Destinations</span></div>
+  <p class="ssub tc" style="margin:0 auto 28px">Click any destination to explore in detail.</p>
+  <div class="dg">
+    <div class="dc big" onclick="openDest('srinagar')"><img src="https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=900&q=80" alt="Srinagar" loading="lazy"><div class="dov"><div class="dn">Srinagar</div><div class="dd2">Dal Lake, Mughal Gardens, Shikara Rides &amp; Old City</div><span class="de">Explore ›</span></div></div>
+    <div class="dc" onclick="openDest('gulmarg')"><img src="https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=600&q=80" alt="Gulmarg" loading="lazy"><div class="dov"><div class="dn">Gulmarg</div><div class="dd2">Asia's highest Gondola, skiing &amp; snow</div><span class="de">Explore ›</span></div></div>
+    <div class="dc" onclick="openDest('pahalgam')"><img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=600&q=80" alt="Pahalgam" loading="lazy"><div class="dov"><div class="dn">Pahalgam</div><div class="dd2">Betaab Valley, Aru Valley, river rafting</div><span class="de">Explore ›</span></div></div>
+    <div class="dc" onclick="openDest('sonmarg')"><img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=600&q=80" alt="Sonmarg" loading="lazy"><div class="dov"><div class="dn">Sonmarg</div><div class="dd2">Meadow of Gold — glaciers &amp; Thajiwas</div><span class="de">Explore ›</span></div></div>
+    <div class="dc" onclick="openDest('katra')"><img src="https://images.unsplash.com/photo-1605649467599-e7da37a53e88?auto=format&fit=crop&w=600&q=80" alt="Katra" loading="lazy"><div class="dov"><div class="dn">Katra &amp; Vaishno Devi</div><div class="dd2">Sacred shrine — a divine pilgrimage</div><span class="de">Explore ›</span></div></div>
+    <div class="dc" onclick="openDest('patnitop')"><img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=600&q=80" alt="Patnitop" loading="lazy"><div class="dov"><div class="dn">Patnitop</div><div class="dd2">Pine forests, snow &amp; paragliding</div><span class="de">Explore ›</span></div></div>
+  </div>
+</div></section>
+
+<section id="acts" class="sec"><div class="con">
+  <div class="stitle tc">Thrilling <span class="gold">Activities</span></div>
+  <p class="ssub tc" style="margin:0 auto 28px">Adventure, culture &amp; serenity — J&amp;K has it all.</p>
+  <div class="ag">
+    <div class="ac"><div class="ai">🚣</div><div class="an">Shikara Ride</div><div class="adesc">Glide across Dal &amp; Nagin Lakes at sunrise or sunset</div></div>
+    <div class="ac"><div class="ai">🚡</div><div class="an">Gondola Ride</div><div class="adesc">Asia's highest cable car in Gulmarg</div></div>
+    <div class="ac"><div class="ai">⛷️</div><div class="an">Skiing</div><div class="adesc">World-class ski slopes in Gulmarg</div></div>
+    <div class="ac"><div class="ai">🏕️</div><div class="an">Trekking</div><div class="adesc">Scenic trails through alpine meadows</div></div>
+    <div class="ac"><div class="ai">🛶</div><div class="an">River Rafting</div><div class="adesc">White water rafting on the Lidder river</div></div>
+    <div class="ac"><div class="ai">🪂</div><div class="an">Paragliding</div><div class="adesc">Soar above Patnitop &amp; Pahalgam</div></div>
+    <div class="ac"><div class="ai">🏡</div><div class="an">Houseboat Stay</div><div class="adesc">Luxurious heritage houseboats on Dal Lake</div></div>
+    <div class="ac"><div class="ai">🌿</div><div class="an">Garden Tours</div><div class="adesc">Shalimar Bagh, Nishat — Mughal legacy</div></div>
+  </div>
+</div></section>
+
+<section id="hotels" class="sec"><div class="con">
+  <div class="stitle">Hotels &amp; <span class="gold">Houseboats</span></div>
+  <p class="ssub">Curated stays across J&amp;K — lakeside luxury to mountain retreats.</p>
+  <div class="hg" id="hotel-grid"></div>
+</div></section>
+
+<section id="cars" class="sec"><div class="con">
+  <div class="stitle">Car <span class="gold">Rental</span></div>
+  <p class="ssub">Well-maintained vehicles with professional drivers across J&amp;K.</p>
+  <div class="cg" id="car-grid"></div>
+</div></section>
+
+<section id="why"><div class="con">
+  <div class="tc" style="margin-bottom:32px"><div class="stitle" style="color:#fff">Why Choose <span class="gold">Ishwar Holidays</span>?</div><p style="color:rgba(255,255,255,.58);font-size:.88rem;max-width:480px;margin:0 auto">Srinagar-based, 20+ years of on-ground expertise.</p></div>
+  <div class="wg">
+    <div class="wi"><div class="wic">🏔️</div><div class="wt">Local Expertise</div><div class="wd">Born and based in Srinagar — real local guidance for every season.</div></div>
+    <div class="wi"><div class="wic">🛡️</div><div class="wt">Trip Assurance</div><div class="wd">Verified hotels, vetted drivers and 24×7 on-ground support.</div></div>
+    <div class="wi"><div class="wic">✨</div><div class="wt">Personalised Plans</div><div class="wd">Custom itineraries for families, couples, groups and solo travellers.</div></div>
+    <div class="wi"><div class="wic">💰</div><div class="wt">Transparent Pricing</div><div class="wd">No hidden costs. Clear inclusions and exclusions.</div></div>
+  </div>
+</div></section>
+
+<section id="testi" class="sec"><div class="con">
+  <div class="stitle tc">What Travellers <span class="gold">Say</span></div>
+  <p class="ssub tc" style="margin:0 auto 28px">Real experiences from our happy guests.</p>
+  <div class="tg">
+    <div class="tcard"><div class="tstars">★★★★★</div><p class="ttxt">"Ishwar Holidays made our Kashmir honeymoon absolutely magical. The houseboat, shikara, Gulmarg snow — everything was perfectly arranged."</p><div class="tau"><div class="tav">P</div><div><div class="tnm">Priya &amp; Arjun Sharma</div><div class="tfr">Mumbai</div></div></div></div>
+    <div class="tcard"><div class="tstars">★★★★★</div><p class="ttxt">"Best family trip we ever had. The team handled everything from hotel bookings to sightseeing. Kids loved the gondola ride!"</p><div class="tau"><div class="tav">R</div><div><div class="tnm">Rajesh Menon</div><div class="tfr">Bangalore</div></div></div></div>
+    <div class="tcard"><div class="tstars">★★★★★</div><p class="ttxt">"The Vaishno Devi package was beautifully organised. Transport, stay at Katra, guide — everything smooth. Very professional team."</p><div class="tau"><div class="tav">S</div><div><div class="tnm">Sunita Gupta</div><div class="tfr">Delhi</div></div></div></div>
+  </div>
+</div></section>
+
+<section id="enq" class="sec"><div class="con"><div class="eq-w">
+  <div class="eq-info">
+    <div class="badge b-gold" style="margin-bottom:12px">Plan Your Trip</div>
+    <h2>Let's Plan Your <span class="gold">Dream Vacation</span></h2>
+    <p>Fill in the form and our travel experts will get back to you within 2 hours.</p>
+    <div class="ci-list">
+      <div class="ci"><div class="ci-ic">📞</div><div class="ci-tx"><b>Call / WhatsApp</b><a id="ci-ph" href="tel:+917889723200">+91-7889723200</a></div></div>
+      <div class="ci"><div class="ci-ic">✉️</div><div class="ci-tx"><b>Email Us</b><a id="ci-em" href="mailto:info@ishwarholidays.com">info@ishwarholidays.com</a></div></div>
+      <div class="ci"><div class="ci-ic">📍</div><div class="ci-tx"><b>Office</b><span id="ci-addr">Srinagar, Jammu &amp; Kashmir</span></div></div>
+      <div class="ci"><div class="ci-ic">🕐</div><div class="ci-tx"><b>Working Hours</b><span>Mon–Sat: 9 AM – 7 PM</span></div></div>
+    </div>
+  </div>
+  <div class="eq-form">
+    <h3>Send an Enquiry</h3>
+    <div class="fg">
+      <div class="fld"><label>Full Name</label><input type="text" id="f-name" placeholder="Your name"></div>
+      <div class="fld"><label>Phone / WhatsApp</label><input type="tel" id="f-phone" placeholder="+91-XXXXXXXXXX"></div>
+      <div class="fld"><label>Email</label><input type="email" id="f-email" placeholder="your@email.com"></div>
+      <div class="fld"><label>Destination</label><select id="f-dest"><option value="">Select destination</option><option>Srinagar</option><option>Gulmarg</option><option>Pahalgam</option><option>Sonmarg</option><option>Katra / Vaishno Devi</option><option>Patnitop</option><option>Complete Kashmir</option></select></div>
+      <div class="fld"><label>Travel Month</label><select id="f-month"><option value="">Select month</option><option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select></div>
+      <div class="fld"><label>Group Size</label><select id="f-grp"><option value="">Select</option><option>1-2 People</option><option>3-5 People</option><option>6-10 People</option><option>10+ People</option></select></div>
+      <div class="fld full"><label>Message</label><textarea id="f-msg" placeholder="Tell us about your travel preferences, budget, or special requirements..."></textarea></div>
+    </div>
+    <button class="btn btn-gold" style="width:100%;margin-top:14px;justify-content:center" onclick="submitEnq()">Send Enquiry →</button>
+  </div>
+</div></div></section>
+
+<footer><div class="con">
+  <div class="fg2">
+    <div class="fb"><div class="logo"><div class="logo-ic">🏔️</div><div class="logo-nm"><span>Ishwar Holidays</span><span>Jammu &amp; Kashmir</span></div></div><p>Your trusted travel partner for unforgettable J&amp;K experiences since 2005.</p><div class="fsoc"><div class="fsb">📘</div><div class="fsb">📸</div><div class="fsb">🐦</div><div class="fsb">▶️</div></div></div>
+    <div class="fc"><h4>Quick Links</h4><ul class="flinks"><li><a href="#pkgs">Tour Packages</a></li><li><a href="#pkgs">Honeymoon</a></li><li><a href="#hotels">Hotels</a></li><li><a href="#cars">Car Rental</a></li><li><a href="#acts">Activities</a></li><li><a href="#why">About Us</a></li></ul></div>
+    <div class="fc"><h4>Top Packages</h4><ul class="flinks"><li><a href="#pkgs">3 Days Srinagar</a></li><li><a href="#pkgs">5 Days Kashmir</a></li><li><a href="#pkgs">7 Days Complete J&amp;K</a></li><li><a href="#pkgs">Honeymoon Special</a></li><li><a href="#pkgs">Adventure Tour</a></li><li><a href="#pkgs">Vaishno Devi Yatra</a></li></ul></div>
+    <div class="fc"><h4>Contact Info</h4><div class="fct">
+      <div class="fci"><span class="ico">📍</span><span id="ft-addr">Srinagar, J&amp;K – 190001</span></div>
+      <div class="fci"><span class="ico">📞</span><span id="ft-ph">+91-7889723200</span></div>
+      <div class="fci"><span class="ico">✉️</span><span id="ft-em">info@ishwarholidays.com</span></div>
+      <div class="fci"><span class="ico">🕐</span><span>Mon–Sat: 9 AM – 7 PM</span></div>
+    </div></div>
+  </div>
+  <div class="fbot"><span>© 2025 Ishwar Holidays. All rights reserved.</span><div class="fbot-l"><a href="#">Privacy Policy</a><a href="#">Terms &amp; Conditions</a></div></div>
+</div></footer>
+
+<a class="wa" id="wa-btn" href="https://wa.me/917889723200" target="_blank">💬</a>
+<div class="sct" id="sct" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</div>
+<div class="toast" id="toast"></div>
+
+<!-- PACKAGE DETAIL MODAL -->
+<div class="ov" id="pkg-ov"><div class="modal" style="max-width:860px">
+  <div class="mhdr"><h3 id="pkg-ov-title">Package Details</h3><button class="mclose" onclick="closeOv('pkg-ov')">✕</button></div>
+  <div class="mbody" id="pkg-ov-body"></div>
+</div></div>
+
+<!-- DESTINATION DETAIL MODAL -->
+<div class="ov" id="dest-ov"><div class="modal" style="max-width:920px">
+  <div class="mhdr"><h3 id="dest-ov-title">Destination Guide</h3><button class="mclose" onclick="closeOv('dest-ov')">✕</button></div>
+  <div class="mbody" id="dest-ov-body"></div>
+</div></div>
+
+<!-- BOOK MODAL -->
+<div class="ov" id="book-ov"><div class="modal" style="max-width:580px">
+  <div class="mhdr"><h3 id="bk-title">Choose an Option</h3><button class="mclose" onclick="closeOv('book-ov')">✕</button></div>
+  <div class="mbody">
+    <div id="bs0"><p style="font-size:.84rem;color:var(--gray);margin-bottom:16px">How would you like to proceed with <strong id="bk-pkg-nm">this package</strong>?</p>
+      <div class="bchoice">
+        <div class="bc pri" onclick="startBook()"><div class="bci">🎟️</div><h4>Book Now</h4><p>Complete booking with traveller details &amp; secure UPI payment</p></div>
+        <div class="bc" onclick="goEnq()"><div class="bci">✉️</div><h4>Send Inquiry</h4><p>Our expert calls back within 2 hours</p></div>
+      </div>
+    </div>
+    <div id="bs1" style="display:none">
+      <div class="bsteps"><div class="bstep on">1 · Details</div><div class="bstep">2 · Payment</div><div class="bstep">3 · Confirm</div></div>
+      <div class="bfg">
+        <div class="bf"><label>Full Name *</label><input id="bk-name" placeholder="Your full name"></div>
+        <div class="bf"><label>Phone / WhatsApp *</label><input id="bk-ph" type="tel" placeholder="+91-XXXXXXXXXX"></div>
+        <div class="bf full"><label>Email *</label><input id="bk-em" type="email" placeholder="your@email.com (required for confirmation)"></div>
+        <div class="bf"><label>Check-in Date</label><input id="bk-cin" type="date"></div>
+        <div class="bf"><label>Adults</label><select id="bk-adu"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6+</option></select></div>
+        <div class="bf"><label>Children (below 12)</label><select id="bk-chi"><option selected>0</option><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
+        <div class="bf full tr-note">✅ <strong>Transport &amp; transfers included</strong> — Private AC cab is part of every package.</div>
+        <div class="bf full"><label>Special Requests</label><textarea id="bk-req" placeholder="Dietary needs, accessibility, special occasions..."></textarea></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-ghost btn-sm" onclick="showBS(0)">← Back</button><button class="btn btn-gold" style="flex:1;justify-content:center" onclick="goStep2()">Continue to Payment →</button></div>
+    </div>
+    <div id="bs2" style="display:none">
+      <div class="bsteps"><div class="bstep done">1 · Details ✓</div><div class="bstep on">2 · Payment</div><div class="bstep">3 · Confirm</div></div>
+      <p style="font-size:.82rem;color:var(--gray);margin-bottom:14px">Choose how much to pay now. Balance paid at the time of your trip.</p>
+      <div class="popts" id="popts"></div>
+      <div class="pnote" id="pnote"></div>
+      <div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="showBS(1)">← Back</button><button class="btn btn-gold" style="flex:1;justify-content:center" onclick="goStep3()">Proceed to Pay →</button></div>
+    </div>
+    <div id="bs3" style="display:none">
+      <div class="bsteps"><div class="bstep done">1 · Details ✓</div><div class="bstep done">2 · Payment ✓</div><div class="bstep on">3 · Confirm</div></div>
+      <div class="psum" id="psum"></div>
+      <div class="qrbox">
+        <p style="font-size:.78rem;color:var(--gray);margin-bottom:10px">Scan with any UPI app to pay</p>
+        <img class="qrimg" id="qr-img" src="" alt="UPI QR">
+        <div class="pmethods"><span class="pm">📱 GPay</span><span class="pm">📱 PhonePe</span><span class="pm">📱 Paytm</span><span class="pm">📱 BHIM</span></div>
+        <div class="qrupi" id="qr-upi">UPI ID: mirmd.shafi5@okhdfcbank</div>
+        <p style="font-size:.75rem;color:var(--gray);margin-bottom:14px">After payment tap confirm — we verify &amp; send confirmation within 30 min.</p>
+      </div>
+      <div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="showBS(2)">← Back</button><button class="btn btn-gold" style="flex:1;justify-content:center;font-size:.8rem" onclick="confirmPay()">✅ I've Paid — Confirm Booking</button></div>
+    </div>
+    <div id="bs4" style="display:none">
+      <div class="conf"><div class="conf-ic">🎉</div><h3>Booking Confirmed!</h3>
+        <p>Thank you! We have received your booking details. Our support team will call you shortly at <strong id="conf-phone"></strong>.</p>
+        <div class="conf-ref" id="conf-ref"></div>
+        <p style="font-size:.76rem;color:var(--gray);margin-top:10px">A confirmation email has been sent to your inbox.</p>
+        <div style="margin-top:18px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button class="btn btn-navy" onclick="closeOv('book-ov')">Close</button>
+          <a href="#enq" class="btn btn-ghost" onclick="closeOv('book-ov')">Contact Us</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<!-- ADMIN OVERLAY -->
+<div id="adm-ov">
+  <div class="adm-pan" id="adm-li-wrap"><div class="adm-li">
+    <div class="adm-logo">🔐</div>
+    <h2>Admin Portal</h2><p>Ishwar Holidays — Secure Access</p>
+    <div class="afg"><label>Username</label><input type="text" id="adm-u" autocomplete="off" placeholder="Username"></div>
+    <div class="afg"><label>Password</label><input type="password" id="adm-p" placeholder="Password"></div>
+    <div class="aerr" id="adm-err">Invalid credentials. Try again.</div>
+    <button class="btn btn-navy" style="width:100%;justify-content:center" id="adm-login-btn" onclick="doLogin()">Sign In</button>
+    <p id="adm-login-note" style="font-size:.72rem;color:var(--gray);margin-top:8px;text-align:center;display:none">Verifying with Firebase…</p>
+    <button style="margin-top:10px;background:none;border:none;color:var(--gray);cursor:pointer;font-size:.82rem" onclick="closeAdm()">✕ Cancel</button>
+  </div></div>
+  <div class="adm-pan" id="adm-dash" style="display:none">
+    <div class="adm-hdr">
+      <h3>🏔️ Ishwar Holidays — Admin <span id="fb-indicator"></span></h3>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        <div class="adm-tabs">
+          <button class="at on" onclick="admTab('ov',this)">Overview</button>
+          <button class="at" onclick="admTab('pkg',this)">Packages</button>
+          <button class="at" onclick="admTab('htl',this)">Hotels</button>
+          <button class="at" onclick="admTab('car',this)">Cars</button>
+          <button class="at" onclick="admTab('set',this)">Settings</button>
+        </div>
+        <button class="adm-x" onclick="logoutAdm()">✕</button>
+      </div>
+    </div>
+    <div class="adm-body">
+      <!-- Overview -->
+      <div class="adm-sec on" id="adm-ov-sec">
+        <div class="hint">💡 Press <strong>Ctrl + Shift + A</strong> to open this panel. All changes save to Firebase — live for all visitors instantly.</div>
+        <div class="ov-cards">
+          <div class="ovc"><div class="num" id="ov-pkg">6</div><div class="lbl">Packages</div></div>
+          <div class="ovc"><div class="num" id="ov-htl">4</div><div class="lbl">Hotels</div></div>
+          <div class="ovc"><div class="num" id="ov-car">4</div><div class="lbl">Cars</div></div>
+          <div class="ovc"><div class="num">20+</div><div class="lbl">Years</div></div>
+        </div>
+        <p style="color:var(--gray);font-size:.82rem">Changes save to Firebase instantly and appear for all visitors worldwide, even after page refresh.</p>
+      </div>
+      <!-- Packages -->
+      <div class="adm-sec" id="adm-pkg-sec">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+          <h3 style="font-size:1rem;color:var(--navy)">Manage Packages</h3>
+          <button class="aab" onclick="openPkgEf(-1)">+ Add Package</button>
+        </div>
+        <div class="atbl-w"><table class="atbl" id="pkg-tbl"></table></div>
+        <div class="aef" id="pkg-ef">
+          <h4 id="pkg-ef-h">Edit Package</h4>
+          <div class="apdt-row">
+            <button class="apdt on" id="apdt-basic" onclick="switchAPTab('basic')">Basic Info</button>
+            <button class="apdt" id="apdt-overview" onclick="switchAPTab('overview')">Overview</button>
+            <button class="apdt" id="apdt-itinerary" onclick="switchAPTab('itinerary')">Itinerary</button>
+            <button class="apdt" id="apdt-inclusions" onclick="switchAPTab('inclusions')">Inclusions</button>
+          </div>
+          <div class="aptab on" id="aptab-basic"><div class="afr">
+            <div class="afl"><label>Package Name</label><input id="pe-name"></div>
+            <div class="afl"><label>Duration</label><input id="pe-dur" placeholder="4N/5D"></div>
+            <div class="afl"><label>Price ₹ / person</label><input id="pe-price" type="number"></div>
+            <div class="afl"><label>Badge</label><input id="pe-badge" placeholder="Popular"></div>
+            <div class="afl"><label>Category</label><select id="pe-cat"><option value="family">Family</option><option value="honeymoon">Honeymoon</option><option value="adventure">Adventure</option><option value="pilgrim">Pilgrimage</option></select></div>
+            <div class="afl"><label>Tags (comma separated)</label><input id="pe-tags"></div>
+            <div class="afl full"><label>Short Description</label><textarea id="pe-desc" style="min-height:50px"></textarea></div>
+            <!-- Photo source toggle -->
+            <div class="afl full">
+              <label>Package Photo</label>
+              <div class="photo-src-toggle">
+                <button class="pst on" id="pkg-url-btn" onclick="togglePhotoSrc('pkg','url')">🔗 URL / Link</button>
+                <button class="pst" id="pkg-upload-btn" onclick="togglePhotoSrc('pkg','upload')">📤 Upload Photo</button>
+              </div>
+              <div id="pkg-url-wrap"><input id="pe-img" placeholder="https://example.com/photo.jpg" oninput="previewPhoto('pe-img','pkg-preview')"><img id="pkg-preview" class="photo-preview" src="" alt="preview"></div>
+              <div id="pkg-upload-wrap" style="display:none">
+                <div class="upload-area" onclick="document.getElementById('pkg-file-input').click()">
+                  <input type="file" id="pkg-file-input" accept="image/*" onchange="handleUpload(event,'pe-img','pkg-preview','pkg-prog-fill','pkg-prog')">
+                  <div style="font-size:1.5rem">📷</div>
+                  <p>Click to select photo from your device</p>
+                </div>
+                <div class="upload-progress" id="pkg-prog"><div class="upload-progress-fill" id="pkg-prog-fill" style="width:0%"></div></div>
+                <img id="pkg-preview" class="photo-preview" src="" alt="preview">
+              </div>
+            </div>
+          </div></div>
+          <div class="aptab" id="aptab-overview"><div class="afr">
+            <div class="afl full"><label>Overview Paragraph</label><textarea id="pe-overview" style="min-height:90px"></textarea></div>
+            <div class="afl full">
+              <label>Highlights — one per line: emoji|text</label>
+              <div class="htxt">Example: 🚣|Sunrise Shikara ride on Dal Lake</div>
+              <textarea id="pe-highlights" style="min-height:130px;font-family:monospace;font-size:.78rem"></textarea>
+            </div>
+          </div></div>
+          <div class="aptab" id="aptab-itinerary">
+            <div class="afl full">
+              <label>Day-wise Itinerary — one per line: Day Title|Description</label>
+              <div class="htxt">Example: Arrival in Srinagar|Arrive at airport. Transfer to hotel.</div>
+              <textarea id="pe-itinerary" style="min-height:200px;font-family:monospace;font-size:.78rem"></textarea>
+            </div>
+          </div>
+          <div class="aptab" id="aptab-inclusions"><div class="afr">
+            <div class="afl full"><label>✅ What's Included — one item per line</label><textarea id="pe-inc" style="min-height:110px;font-family:monospace;font-size:.78rem"></textarea></div>
+            <div class="afl full"><label>❌ What's NOT Included — one item per line</label><textarea id="pe-exc" style="min-height:110px;font-family:monospace;font-size:.78rem"></textarea></div>
+          </div></div>
+          <div class="afact"><button class="btn-sv" onclick="savePkg()">💾 Save All Changes</button><button class="btn-cx" onclick="closeEf('pkg-ef')">Cancel</button></div>
+        </div>
+      </div>
+      <!-- Hotels -->
+      <div class="adm-sec" id="adm-htl-sec">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+          <h3 style="font-size:1rem;color:var(--navy)">Manage Hotels</h3>
+          <button class="aab" onclick="openHtlEf(-1)">+ Add Hotel</button>
+        </div>
+        <div class="atbl-w"><table class="atbl" id="htl-tbl"></table></div>
+        <div class="aef" id="htl-ef"><h4 id="htl-ef-h">Edit Hotel</h4>
+          <div class="afr">
+            <div class="afl"><label>Hotel Name</label><input id="he-name"></div>
+            <div class="afl"><label>Location</label><input id="he-loc"></div>
+            <div class="afl"><label>Stars (1-5)</label><input id="he-stars" type="number" min="1" max="5"></div>
+            <div class="afl"><label>Price/Night ₹</label><input id="he-price" type="number"></div>
+            <div class="afl"><label>Badge</label><input id="he-badge"></div>
+            <div class="afl"><label>Amenities</label><input id="he-am"></div>
+            <div class="afl full">
+              <label>Hotel Photo</label>
+              <div class="photo-src-toggle">
+                <button class="pst on" id="htl-url-btn" onclick="togglePhotoSrc('htl','url')">🔗 URL / Link</button>
+                <button class="pst" id="htl-upload-btn" onclick="togglePhotoSrc('htl','upload')">📤 Upload Photo</button>
+              </div>
+              <div id="htl-url-wrap"><input id="he-img" placeholder="https://example.com/hotel.jpg" oninput="previewPhoto('he-img','htl-preview')"><img id="htl-preview" class="photo-preview" src="" alt="preview"></div>
+              <div id="htl-upload-wrap" style="display:none">
+                <div class="upload-area" onclick="document.getElementById('htl-file-input').click()">
+                  <input type="file" id="htl-file-input" accept="image/*" onchange="handleUpload(event,'he-img','htl-preview','htl-prog-fill','htl-prog')">
+                  <div style="font-size:1.5rem">📷</div>
+                  <p>Click to select photo from your device</p>
+                </div>
+                <div class="upload-progress" id="htl-prog"><div class="upload-progress-fill" id="htl-prog-fill" style="width:0%"></div></div>
+                <img id="htl-preview" class="photo-preview" src="" alt="preview">
+              </div>
+            </div>
+          </div>
+          <div class="afact"><button class="btn-sv" onclick="saveHtl()">💾 Save</button><button class="btn-cx" onclick="closeEf('htl-ef')">Cancel</button></div>
+        </div>
+      </div>
+      <!-- Cars -->
+      <div class="adm-sec" id="adm-car-sec">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+          <h3 style="font-size:1rem;color:var(--navy)">Manage Cars</h3>
+          <button class="aab" onclick="openCarEf(-1)">+ Add Car</button>
+        </div>
+        <div class="atbl-w"><table class="atbl" id="car-tbl"></table></div>
+        <div class="aef" id="car-ef"><h4 id="car-ef-h">Edit Car</h4>
+          <div class="afr">
+            <div class="afl"><label>Car Name</label><input id="ce-name"></div>
+            <div class="afl"><label>Type</label><input id="ce-type" placeholder="Family / Luxury"></div>
+            <div class="afl"><label>Seats</label><input id="ce-seats" type="number"></div>
+            <div class="afl"><label>Fuel</label><input id="ce-fuel"></div>
+            <div class="afl"><label>Transmission</label><input id="ce-tr"></div>
+            <div class="afl"><label>Price/Day ₹</label><input id="ce-price" type="number"></div>
+            <div class="afl full">
+              <label>Car Photo</label>
+              <div class="photo-src-toggle">
+                <button class="pst on" id="car-url-btn" onclick="togglePhotoSrc('car','url')">🔗 URL / Link</button>
+                <button class="pst" id="car-upload-btn" onclick="togglePhotoSrc('car','upload')">📤 Upload Photo</button>
+              </div>
+              <div id="car-url-wrap">
+                <input id="ce-img" placeholder="https://example.com/car.jpg (optional — leave empty for emoji icon)" oninput="previewPhoto('ce-img','car-preview')">
+                <img id="car-preview" class="photo-preview" src="" alt="preview">
+              </div>
+              <div id="car-upload-wrap" style="display:none">
+                <div class="upload-area" onclick="document.getElementById('car-file-input').click()">
+                  <input type="file" id="car-file-input" accept="image/*" onchange="handleUpload(event,'ce-img','car-preview','car-prog-fill','car-prog')">
+                  <div style="font-size:1.5rem">📷</div>
+                  <p>Click to select car photo</p>
+                </div>
+                <div class="upload-progress" id="car-prog"><div class="upload-progress-fill" id="car-prog-fill" style="width:0%"></div></div>
+                <img id="car-preview" class="photo-preview" src="" alt="preview">
+              </div>
+            </div>
+            <div class="afl"><label>Emoji Icon (fallback if no photo)</label><input id="ce-ico" placeholder="🚗"></div>
+          </div>
+          <div class="afact"><button class="btn-sv" onclick="saveCar()">💾 Save</button><button class="btn-cx" onclick="closeEf('car-ef')">Cancel</button></div>
+        </div>
+      </div>
+      <!-- Settings -->
+      <div class="adm-sec" id="adm-set-sec">
+        <h3 style="font-size:1rem;color:var(--navy);margin-bottom:14px">Site Settings</h3>
+        <div class="stg">
+          <div class="sf2"><label>Phone Number</label><input id="st-ph"></div>
+          <div class="sf2"><label>Email Address</label><input id="st-em"></div>
+          <div class="sf2"><label>WhatsApp (with country code)</label><input id="st-wa"></div>
+          <div class="sf2"><label>UPI ID (for payments)</label><input id="st-upi"></div>
+          <div class="sf2 full"><label>Office Address</label><input id="st-addr"></div>
+          <div class="sf2 full"><label>Hero Tagline</label><input id="st-tag"></div>
+        </div>
+        <div style="margin-top:18px;padding:14px;background:var(--lg);border-radius:10px;font-size:.78rem;color:var(--gray)">
+          <strong style="color:var(--navy);display:block;margin-bottom:6px">🔐 Change Admin Password</strong>
+          To change admin credentials, go to Firebase Console → Firestore → ishwar_config → admin → edit username/password fields directly.
+        </div>
+        <button class="btn-sv" style="margin-top:14px" onclick="saveSettings()">💾 Save Settings</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =======================================================
+   ██████╗  ██████╗ ███╗   ██╗███████╗██╗ ██████╗ 
+   ██╔════╝██╔═══██╗████╗  ██║██╔════╝██║██╔════╝ 
+   ██║     ██║   ██║██╔██╗ ██║█████╗  ██║██║  ███╗
+   ██║     ██║   ██║██║╚██╗██║██╔══╝  ██║██║   ██║
+   ╚██████╗╚██████╔╝██║ ╚████║██║     ██║╚██████╔╝
+    ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝ 
+   REPLACE THE SECTION BELOW WITH YOUR OWN VALUES
+   ======================================================= */
+
+var firebaseConfig = {
+  apiKey:            "AIzaSyBoOSYD6q-k_tn8R2pMZCBayVquLsGmSn4",
+  authDomain:        "ishwarholidays-9807b.firebaseapp.com",
+  projectId:         "ishwarholidays-9807b",
+  storageBucket:     "ishwarholidays-9807b.firebasestorage.app",
+  messagingSenderId: "995477191689",
+  appId:             "1:995477191689:web:3acd6e9ae8bc94b7864cd8"
+};
+
+// EmailJS — from emailjs.com dashboard
+var EMAILJS_PUBLIC_KEY   = "YOUR_EMAILJS_PUBLIC_KEY";
+var EMAILJS_SERVICE_ID   = "YOUR_EMAILJS_SERVICE_ID";
+var EMAILJS_BOOK_ADMIN   = "booking_admin";      // template sent to you
+var EMAILJS_BOOK_CUST    = "booking_customer";   // template sent to customer
+var EMAILJS_ENQ_ADMIN    = "enquiry_admin";      // template for enquiries
+
+/* ======================================================= */
+
+/* ====== DEFAULT DATA (shown before Firebase loads) ====== */
+var DEF_D={
+  settings:{phone:'+91-7889723200',email:'info@ishwarholidays.com',whatsapp:'917889723200',upi:'mirmd.shafi5@okhdfcbank',address:'Srinagar, Jammu & Kashmir – 190001',tagline:"From the shimmering Dal Lake to the snow-capped peaks of Gulmarg — experience the unmatched beauty of J&K with your trusted local travel partner."},
+  packages:[
+    {id:1,name:'3 Days Srinagar',dur:'2N/3D',price:8499,cat:'family',badge:'Popular',desc:'Explore Dal Lake, Mughal Gardens, Old City Bazaars & iconic Shikara Rides.',tags:'Dal Lake,Mughal Gardens,Shikara',img:'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?auto=format&fit=crop&w=600&q=75'},
+    {id:2,name:'5 Days Kashmir',dur:'4N/5D',price:12999,cat:'family',badge:'Best Seller',desc:'Srinagar + Gulmarg + Pahalgam — the perfect Kashmir triangle for families.',tags:'Gulmarg,Pahalgam,Gondola',img:'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=600&q=75'},
+    {id:3,name:'7 Days Complete J&K',dur:'6N/7D',price:18499,cat:'family',badge:'',desc:'Full Kashmir valley including Sonmarg, Patnitop & Betaab Valley.',tags:'Sonmarg,Patnitop,Complete Tour',img:'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=600&q=75'},
+    {id:4,name:'Honeymoon Special',dur:'5N/6D',price:24999,cat:'honeymoon',badge:'Romantic',desc:'Private houseboat, candlelight dinner, shikara at sunrise — pure romance.',tags:'Houseboat,Romantic,Shikara',img:'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=600&q=75'},
+    {id:5,name:'Adventure Tour',dur:'6N/7D',price:21999,cat:'adventure',badge:'Thrilling',desc:'Trekking, white water rafting, skiing, paragliding — adrenaline overload!',tags:'Trekking,Rafting,Skiing',img:'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=600&q=75'},
+    {id:6,name:'Vaishno Devi Yatra',dur:'3N/4D',price:9999,cat:'pilgrim',badge:'Divine',desc:'Guided pilgrimage to Mata Vaishno Devi shrine in Katra with devotional care.',tags:'Katra,Vaishno Devi,Pilgrimage',img:'https://images.unsplash.com/photo-1605649467599-e7da37a53e88?auto=format&fit=crop&w=600&q=75'}
+  ],
+  hotels:[
+    {id:1,name:'Hotel Snow Land',loc:'Srinagar',stars:4,price:7499,badge:'Premium',am:'Lake View, Free WiFi, Restaurant',img:'https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?auto=format&fit=crop&w=400&q=75'},
+    {id:2,name:'Vintage Luxury Hotel',loc:'Srinagar',stars:5,price:12500,badge:'Luxury',am:'Spa, Pool, Fine Dining, Concierge',img:'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=400&q=75'},
+    {id:3,name:'Pine Valley Resort',loc:'Gulmarg',stars:4,price:8999,badge:'Mountain View',am:'Mountain View, Bonfire, Heater',img:'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=400&q=75'},
+    {id:4,name:'Royal Kashmir Houseboat',loc:'Dal Lake',stars:4,price:10500,badge:'Houseboat',am:'Lake View, Private Deck, Breakfast',img:'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=400&q=75'}
+  ],
+  cars:[
+    {id:1,name:'Toyota Innova Crysta',type:'Family',seats:7,fuel:'Diesel',tr:'Manual',price:4500,ico:'🚐',img:''},
+    {id:2,name:'Toyota Fortuner',type:'Luxury',seats:7,fuel:'Diesel',tr:'Automatic',price:8500,ico:'🚙',img:''},
+    {id:3,name:'Maruti Swift Dzire',type:'Economy',seats:4,fuel:'Petrol',tr:'Manual',price:1800,ico:'🚗',img:''},
+    {id:4,name:'Tempo Traveller 12',type:'Group',seats:12,fuel:'Diesel',tr:'Manual',price:5500,ico:'🚌',img:''}
+  ]
+};
+
+var DEF_PKG={
+  1:{overview:"Srinagar is the crown jewel of Kashmir. This 3-day tour is perfect for first-time visitors.",highlights:[{ico:'🚣',txt:'Sunrise Shikara ride on Dal Lake'},{ico:'🌸',txt:'Visit Nishat, Shalimar & Chashme Shahi gardens'},{ico:'🕌',txt:'Old City tour — Jama Masjid & local bazaars'},{ico:'⛪',txt:'Shankaracharya Temple panoramic views'},{ico:'🏠',txt:'Optional houseboat stay on Dal Lake'},{ico:'🛍️',txt:'Shopping for Pashmina, saffron & dry fruits'}],itinerary:[{day:1,title:'Arrival in Srinagar',desc:'Arrive at Sheikh ul Alam Airport. Transfer to hotel. Evening Shikara ride on Dal Lake. Welcome dinner.'},{day:2,title:'Mughal Gardens & Old City',desc:'Visit Shalimar Bagh, Nishat Bagh, Chashme Shahi. Afternoon at Old City — Jama Masjid, Hari Parbat Fort, local bazaars.'},{day:3,title:'Shankaracharya & Departure',desc:'Morning at Shankaracharya Temple. Shopping for Kashmiri crafts. Airport transfer.'}],inc:['2 nights hotel (twin sharing)','Daily breakfast','Airport transfers','All sightseeing by private cab','Expert guide','Shikara ride on Dal Lake','All taxes & GST'],exc:['Airfare / train tickets','Personal expenses & shopping','Gondola ride','Lunch & dinner (except breakfast)','Travel insurance']},
+  2:{overview:"Experience the iconic Kashmir triangle — Srinagar, Gulmarg & Pahalgam.",highlights:[{ico:'🚡',txt:"Gondola ride — Asia's highest cable car"},{ico:'🏔️',txt:'Snow activities in Gulmarg'},{ico:'🌊',txt:'Betaab Valley & Aru Valley in Pahalgam'},{ico:'🚣',txt:'Shikara ride on serene Dal Lake'},{ico:'🌺',txt:'Mughal Gardens — Nishat & Shalimar'},{ico:'🛒',txt:'Kashmir dry fruit & Pashmina shopping'}],itinerary:[{day:1,title:'Arrival in Srinagar',desc:'Arrive in Srinagar. Hotel check-in. Evening Shikara ride.'},{day:2,title:'Srinagar Sightseeing',desc:'Mughal Gardens, Old City, Shankaracharya Temple.'},{day:3,title:'Gulmarg Day Trip',desc:'Drive to Gulmarg. Gondola cable car. Snow activities. Return.'},{day:4,title:'Pahalgam Excursion',desc:'Drive to Pahalgam. Betaab Valley, Aru Valley. Optional rafting. Return.'},{day:5,title:'Departure',desc:'Morning shopping. Airport transfer.'}],inc:['4 nights hotel in Srinagar','Daily breakfast','All transfers by AC cab','Expert guide','Shikara ride','All taxes'],exc:['Gondola tickets (₹700–1,400 pp)','River rafting charges','Airfare / train','Meals other than breakfast']},
+  3:{overview:"The ultimate 7-day Kashmir experience covering Srinagar, Gulmarg, Pahalgam, Sonmarg, and Patnitop.",highlights:[{ico:'❄️',txt:'Thajiwas Glacier at Sonmarg'},{ico:'🚡',txt:'Gondola ride at Gulmarg'},{ico:'🏕️',txt:'Camping & trekking in alpine meadows'},{ico:'🌊',txt:'Betaab Valley & river rafting'},{ico:'🛤️',txt:'Scenic drive through Zoji La Pass'},{ico:'🌸',txt:'All 3 Mughal Gardens in Srinagar'}],itinerary:[{day:1,title:'Arrival Srinagar',desc:'Arrive, hotel check-in, evening Shikara ride.'},{day:2,title:'Srinagar City Tour',desc:'Mughal Gardens, Old City, Shankaracharya.'},{day:3,title:'Sonmarg',desc:'Trek to Thajiwas Glacier. Optional pony ride. Return.'},{day:4,title:'Gulmarg',desc:'Gondola ride (Phase 1 & 2). Snow activities.'},{day:5,title:'Pahalgam',desc:'Betaab Valley, Aru Valley. Optional rafting.'},{day:6,title:'Patnitop & Jammu',desc:'Drive via Jawahar Tunnel. Paragliding viewpoints. Jammu overnight.'},{day:7,title:'Departure',desc:'Jammu airport/station transfer.'}],inc:['5N Srinagar + 1N Jammu hotel','Daily breakfast','All transfers','Expert guide throughout','Shikara ride','All taxes'],exc:['Gondola tickets & pony rides','Airfare/train','Adventure activities','Personal expenses']},
+  4:{overview:"Kashmir is the honeymoon capital of India. Designed for newlyweds.",highlights:[{ico:'🏡',txt:'2 nights private luxury houseboat on Dal Lake'},{ico:'🌅',txt:'Sunrise Shikara ride'},{ico:'🕯️',txt:'Candlelight dinner by the lake'},{ico:'❤️',txt:"Couple's Gondola ride at Gulmarg"},{ico:'🌸',txt:'Garden visits with private photography'},{ico:'🎁',txt:'Welcome bouquet, cake & honeymoon setup'}],itinerary:[{day:1,title:'Arrival & Houseboat',desc:'Arrive in Srinagar. Private Shikara to luxury houseboat. Candlelight dinner on the lake deck.'},{day:2,title:'Sunrise Shikara & Gardens',desc:'Sunrise Shikara through floating flower market. Mughal Gardens. Private photography.'},{day:3,title:'Gulmarg',desc:'Check out of houseboat. Gondola ride. Evening stroll in meadows.'},{day:4,title:'Pahalgam',desc:'Horse ride in Aru Valley. Sunset by Lidder River. Romantic picnic.'},{day:5,title:'Day at Leisure',desc:'Shopping for Pashmina & saffron. Farewell dinner.'},{day:6,title:'Departure',desc:'Warm farewell. Airport transfer.'}],inc:['2N luxury houseboat + 3N premium hotel','Daily breakfast & welcome dinner','Private cab','Shikara rides','Candlelight dinner, bouquet & honeymoon setup',"Couple's Gondola ride",'All taxes'],exc:['Airfare / train','Personal expenses','Spa sessions','Lunch & dinner (except specified)']},
+  5:{overview:"7-day adrenaline-packed adventure tour.",highlights:[{ico:'⛷️',txt:'Skiing & snowboarding in Gulmarg'},{ico:'🛶',txt:'Grade 3 white water rafting on Lidder'},{ico:'🥾',txt:'Trekking to Thajiwas Glacier'},{ico:'🪂',txt:'Paragliding over Patnitop valley'},{ico:'🧗',txt:'Rock climbing & rappelling'},{ico:'🏕️',txt:'Overnight camping under the stars'}],itinerary:[{day:1,title:'Arrival',desc:'Arrive in Srinagar. Equipment briefing with adventure guide.'},{day:2,title:'Gulmarg — Skiing & Gondola',desc:'Skiing lesson with certified instructor. Gondola to Apharwat Peak. Snow trekking.'},{day:3,title:'Sonmarg — Glacier Trek',desc:'Trek to Thajiwas Glacier. Ice walking with crampons. Camping.'},{day:4,title:'Pahalgam — River Rafting',desc:'Grade 3 rafting on Lidder River. Rock climbing. Camping overnight.'},{day:5,title:'Betaab Valley Trek',desc:'Trek through Aru Valley. Chandanwari viewpoint.'},{day:6,title:'Patnitop — Paragliding',desc:'Tandem paragliding over pine forest valley. Nathatop viewpoint.'},{day:7,title:'Departure',desc:'Drive to Jammu. Airport transfer.'}],inc:['6N mixed accommodation (hotel + camp)','Daily breakfast','All adventure activities with certified instructors','Safety equipment','All transfers','All taxes'],exc:['Airfare / train','Travel insurance (strongly recommended)','Personal expenses']},
+  6:{overview:"Mata Vaishno Devi pilgrimage — 4-day package planned with care and devotion.",highlights:[{ico:'🙏',txt:'Guided trek to Vaishno Devi Bhawan (13 km)'},{ico:'⛩️',txt:'Visit to Ardhkuwari Cave'},{ico:'🌄',txt:'Bhairon Baba Temple at the top'},{ico:'🚁',txt:'Optional helicopter Katra–Sanjichhat'},{ico:'🛕',txt:'Raghunath Temple in Jammu'},{ico:'🍽️',txt:'Sattvic langar meals during pilgrimage'}],itinerary:[{day:1,title:'Arrival at Katra',desc:'Arrive at Jammu. Transfer to Katra (50 km). Hotel check-in. Obtain Yatra Parchi.'},{day:2,title:'Trek to Vaishno Devi',desc:'Early 4 AM start. Trek from Katra to Bhawan (14 km). Ardhkuwari Cave. Bhawan darshan. Bhairon Baba Temple. Descend.'},{day:3,title:'Patnitop Sightseeing',desc:'Drive to Patnitop. Pine forests, Sudh Mahadev temple, Nathatop viewpoint.'},{day:4,title:'Jammu & Departure',desc:'Raghunath Temple, Bahu Fort. Transfer to Jammu airport.'}],inc:['3N accommodation','Daily breakfast','Jammu–Katra–Jammu transfers','Yatra Parchi assistance','Expert guide','All taxes'],exc:['Airfare / train to Jammu','Helicopter (₹1,500 pp optional)','Personal expenses','Pony/palki charges']}
+};
+
+var DEST_D={
+  srinagar:{name:'Srinagar',tagline:'The Venice of the East — Summer Capital of J&K',img:'https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=1200&q=80',chips:['City Sightseeing','Cultural','Romantic','Family'],about:"Srinagar, the summer capital of Jammu & Kashmir, is a city of breathtaking natural beauty nestled in the Kashmir Valley at 1,585 metres. Famous for its floating gardens, traditional houseboats, vibrant bazaars, Mughal architecture, and legendary warmth of its people.",attractions:[{ico:'🌊',name:'Dal Lake',desc:'The crown jewel — iconic shikaras, floating markets & luxury houseboats'},{ico:'🌸',name:'Mughal Gardens',desc:'Nishat Bagh, Shalimar Bagh & Chashme Shahi — terraced masterpieces'},{ico:'⛪',name:'Shankaracharya Temple',desc:'Hilltop temple at 1,000 ft — panoramic views of the entire city'},{ico:'🕌',name:'Jama Masjid',desc:'Historic mosque with 378 wooden pillars — architectural marvel'},{ico:'🛍️',name:'Lal Chowk',desc:"Srinagar's bustling heart — Kashmiri crafts, spices & textiles"},{ico:'🏡',name:'Nagin Lake',desc:'Quieter sibling of Dal Lake — ideal for peaceful houseboat stays'}],info:[{k:'Best Time',v:'March to October'},{k:'Temperature',v:'5°C–30°C (Summer), -10°C–5°C (Winter)'},{k:'Distance from Delhi',v:'~800 km | 1.5 hrs by flight'},{k:'Famous For',v:'Shikara, Houseboats, Mughal Gardens, Pashmina'}]},
+  gulmarg:{name:'Gulmarg',tagline:"Asia's Winter Sports Capital — The Meadow of Flowers",img:'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80',chips:['Snow Sports','Adventure','Honeymoon','Scenic'],about:"Gulmarg, meaning 'Meadow of Flowers', is a breathtaking hill station at 2,650 metres. In summer a vast green meadow; in winter one of Asia's premier ski destinations. The Gulmarg Gondola — Asia's highest cable car — operates year-round.",attractions:[{ico:'🚡',name:'Gulmarg Gondola',desc:"Asia's highest cable car — Phase 1 Kongdori, Phase 2 Apharwat (13,400 ft)"},{ico:'⛷️',name:'Ski Slopes',desc:'Certified runs for all levels — snow school available'},{ico:'🏌️',name:"World's Highest Golf Course",desc:"18-hole course at 2,650m — among the world's highest"},{ico:'🌸',name:'Wildflower Meadows',desc:"Vast alpine wildflower plains in summer"},{ico:'🏔️',name:'Apharwat Peak',desc:'Gondola Phase 2 to 13,400 ft for stunning Himalayan panoramas'},{ico:'🛷',name:'Snow Activities',desc:'Sledging, snowman building, snow trekking — fun for all ages'}],info:[{k:'Best Time',v:'Dec–Mar for snow | Jun–Sep for meadows'},{k:'Altitude',v:'2,650 m (8,694 ft)'},{k:'Distance from Srinagar',v:'56 km (~2 hours)'},{k:'Famous For',v:'Gondola, Skiing, Snow sports, Alpine views'}]},
+  pahalgam:{name:'Pahalgam',tagline:"The Valley of Shepherds — Kashmir's Most Scenic Hill Station",img:'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1200&q=80',chips:['Scenic','Trekking','Rafting','Film Locations'],about:"Pahalgam, the 'Valley of Shepherds', sits at 2,130 metres at the confluence of the Sheshnag and Lidder rivers, surrounded by snow-capped mountains and dense pine forests.",attractions:[{ico:'🌄',name:'Betaab Valley',desc:'Named after the 1983 film — spectacular glacial valley with crystal streams'},{ico:'🏕️',name:'Aru Valley',desc:'Peaceful meadow 11 km from Pahalgam — camping, horse rides & treks'},{ico:'❄️',name:'Chandanwari',desc:'Amarnath Yatra base camp at 2,895 m — snow point in June & July'},{ico:'🛶',name:'Lidder River Rafting',desc:'Grade 2–3 white water rafting on the crystal Lidder River'},{ico:'🌊',name:'Baisaran',desc:"'Mini Switzerland' — pristine meadow by pony ride from town"},{ico:'🏃',name:'Amarnath Base Camp',desc:'Start the sacred Amarnath Yatra (June–August)'}],info:[{k:'Best Time',v:'April to October'},{k:'Altitude',v:'2,130 m (6,988 ft)'},{k:'Distance from Srinagar',v:'95 km (~3 hours)'},{k:'Famous For',v:'Betaab Valley, River Rafting, Amarnath Yatra'}]},
+  sonmarg:{name:'Sonmarg',tagline:"The Meadow of Gold — Gateway to the Himalayas",img:'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80',chips:['Glaciers','Trekking','Scenic Drive','Adventure'],about:"Sonmarg, meaning 'Meadow of Gold', sits at 2,730 metres on the historic Silk Road. Framed by glaciers, gushing streams, and towering peaks. The Thajiwas Glacier is the star attraction.",attractions:[{ico:'❄️',name:'Thajiwas Glacier',desc:'Massive glacier accessible by short trek — snow available year-round'},{ico:'🏔️',name:'Zoji La Pass',desc:'Historic mountain pass at 3,528 m — connects Kashmir to Ladakh'},{ico:'🎣',name:'Trout Fishing',desc:'The Sindh River is perfect for trout fishing — permits available'},{ico:'🥾',name:'Himalayan Trekking',desc:'Challenging treks to Gangabal Lake, Krishnasar & Vishansar'},{ico:'🐴',name:'Pony Rides',desc:'Hire a pony to reach Thajiwas Glacier — popular experience'},{ico:'🌄',name:'Nichnai Pass',desc:'Breathtaking pass accessible by guided trek from Sonmarg'}],info:[{k:'Best Time',v:'May to October (road open)'},{k:'Altitude',v:'2,730 m (8,957 ft)'},{k:'Distance from Srinagar',v:'87 km (~3 hours)'},{k:'Famous For',v:'Thajiwas Glacier, Zoji La Pass, Silk Route'}]},
+  katra:{name:'Katra & Vaishno Devi',tagline:"The Abode of Mata Vaishno Devi — A Sacred Journey",img:'https://images.unsplash.com/photo-1605649467599-e7da37a53e88?auto=format&fit=crop&w=1200&q=80',chips:['Pilgrimage','Spiritual','Family','Religious'],about:"Katra is the base camp for the pilgrimage to the holy shrine of Mata Vaishno Devi — one of the most visited shrines in the world with over 8 million devotees annually.",attractions:[{ico:'🛕',name:'Vaishno Devi Bhawan',desc:'The holy shrine — three natural rock-formed pindis inside a cave'},{ico:'⛩️',name:'Ardhkuwari Cave',desc:'Mid-route cave where Mata meditated for 9 months'},{ico:'🙏',name:'Bhairon Baba Temple',desc:'1.5 km beyond main shrine — yatra considered incomplete without this'},{ico:'🌊',name:'Ban Ganga',desc:'Holy stream at trek start — devotees take a ritual dip'},{ico:'🏔️',name:'Sanjichhat Viewpoint',desc:'Accessible by Gondola — aerial views of the entire route'},{ico:'🕍',name:'Raghunath Temple, Jammu',desc:'Largest temple complex in North India — 55 km away'}],info:[{k:'Best Time',v:'March to October'},{k:'Trek Distance',v:'14 km one-way from Katra'},{k:'Shrine Altitude',v:'5,200 ft (1,585 m)'},{k:'Distance from Jammu',v:'50 km (~1.5 hours)'},{k:'Helicopter',v:'Katra to Sanjichhat (~₹1,500 pp)'}]},
+  patnitop:{name:'Patnitop',tagline:"Jammu's Most Beautiful Hill Station — Pine Forests & Snow",img:'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80',chips:['Scenic','Winter Sports','Family','Relaxation'],about:"Patnitop is a picturesque plateau at 2,024 metres in Udhampur district, surrounded by dense coniferous forests. Receives snowfall December–February.",attractions:[{ico:'🌲',name:'Pine Forest Walks',desc:'Breathtaking walks through thick coniferous forests'},{ico:'🪂',name:'Paragliding',desc:'Tandem paragliding flights over the vast valley below'},{ico:'❄️',name:'Snow Sports',desc:'Sledging, snowball fights in winter (Dec–Feb)'},{ico:'🕍',name:'Sudh Mahadev Temple',desc:'Ancient Shiva temple 25 km from Patnitop'},{ico:'🌄',name:'Nathatop Viewpoint',desc:'One of the finest Himalayan viewpoints in Jammu region'},{ico:'🏕️',name:'Sanasar',desc:'Beautiful meadow 19 km away — camping & paragliding'}],info:[{k:'Best Time',v:'Oct–Nov (autumn) | Dec–Feb (snow)'},{k:'Altitude',v:'2,024 m (6,640 ft)'},{k:'Distance from Jammu',v:'112 km (~3 hours)'},{k:'Famous For',v:'Pine forests, Paragliding, Snow, Nathatop'}]}
+};
+
+/* ====== STATE ====== */
+var D=JSON.parse(JSON.stringify(DEF_D));
+var PKG_D=JSON.parse(JSON.stringify(DEF_PKG));
+var admLogged=false,editPkgId=-1,editHtlId=-1,editCarId=-1,nxtId=300;
+var bkPkg=null,payPct=50,bkData={};
+var db=null,storage=null,fbOk=false;
+
+/* ====== EMAILJS INIT ====== */
+if(typeof emailjs!=='undefined'&&EMAILJS_PUBLIC_KEY!=='YOUR_EMAILJS_PUBLIC_KEY'){
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+}
+
+/* ====== FIREBASE INIT ====== */
+function initFirebase(){
+  try{
+    if(firebaseConfig.apiKey==='YOUR_API_KEY'){
+      console.warn('Firebase not configured yet — running with default data.');
+      return;
+    }
+    firebase.initializeApp(firebaseConfig);
+    db=firebase.firestore();
+    storage=firebase.storage();
+    fbOk=true;
+    setFbIndicator(true);
+    // Real-time data listener — all visitors get live updates including after refresh
+    db.collection('ishwar').doc('site_data').onSnapshot(function(snap){
+      if(snap.exists){var d=snap.data();if(d.D){D=d.D;applySettings();renderAll();}}
+    },function(e){console.error('Firestore error:',e);});
+    db.collection('ishwar').doc('pkg_details').onSnapshot(function(snap){
+      if(snap.exists&&snap.data().P)PKG_D=snap.data().P;
+    },function(){});
+  }catch(e){
+    console.error('Firebase init error:',e);
+    setFbIndicator(false);
+  }
+}
+function setFbIndicator(ok){
+  var el=gid('fb-indicator');
+  if(el)el.innerHTML=ok?'<span class="fb-status fb-ok">🟢 Live</span>':'<span class="fb-status fb-err">🔴 Offline</span>';
+}
+
+/* ====== FIREBASE PERSIST ====== */
+async function persist(){
+  if(!fbOk||!db){showToast('⚠️ Firebase not connected — changes not saved.',true);return;}
+  try{
+    await db.collection('ishwar').doc('site_data').set({D:D});
+    await db.collection('ishwar').doc('pkg_details').set({P:PKG_D});
+    showToast('✅ Saved! All visitors see updates immediately.');
+  }catch(e){showToast('❌ Save failed: '+e.message,true);}
+}
+
+/* ====== FIREBASE STORAGE UPLOAD ====== */
+async function handleUpload(event,imgFieldId,previewId,progFillId,progId){
+  var file=event.target.files[0];if(!file)return;
+  if(!fbOk||!storage){showToast('⚠️ Firebase Storage not configured.',true);return;}
+  var prog=gid(progId),fill=gid(progFillId);
+  prog.classList.add('vis');fill.style.width='0%';
+  try{
+    var ref=storage.ref('ishwar_uploads/'+Date.now()+'_'+file.name.replace(/\s/g,'_'));
+    var task=ref.put(file);
+    task.on('state_changed',function(snap){
+      fill.style.width=Math.round(snap.bytesTransferred/snap.totalBytes*100)+'%';
+    });
+    await task;
+    var url=await ref.getDownloadURL();
+    gid(imgFieldId).value=url;
+    var prev=gid(previewId);if(prev){prev.src=url;prev.classList.add('vis');}
+    prog.classList.remove('vis');
+    showToast('✅ Photo uploaded successfully!');
+  }catch(e){
+    prog.classList.remove('vis');
+    showToast('❌ Upload failed: '+e.message,true);
+  }
+}
+
+function previewPhoto(inputId,previewId){
+  var url=gid(inputId).value.trim(),prev=gid(previewId);
+  if(!prev)return;
+  if(url){prev.src=url;prev.classList.add('vis');}else{prev.src='';prev.classList.remove('vis');}
+}
+
+function togglePhotoSrc(prefix,mode){
+  var urlWrap=gid(prefix+'-url-wrap'),uploadWrap=gid(prefix+'-upload-wrap');
+  var urlBtn=gid(prefix+'-url-btn'),uploadBtn=gid(prefix+'-upload-btn');
+  if(mode==='url'){urlWrap.style.display='block';uploadWrap.style.display='none';urlBtn.classList.add('on');uploadBtn.classList.remove('on');}
+  else{urlWrap.style.display='none';uploadWrap.style.display='block';urlBtn.classList.remove('on');uploadBtn.classList.add('on');}
+}
+
+/* ====== EMAILJS SEND ====== */
+async function sendEmail(templateId,params){
+  if(typeof emailjs==='undefined'||EMAILJS_PUBLIC_KEY==='YOUR_EMAILJS_PUBLIC_KEY'||EMAILJS_SERVICE_ID==='YOUR_EMAILJS_SERVICE_ID'){
+    console.log('EmailJS not configured — email would have been sent:',templateId,params);
+    return;
+  }
+  try{await emailjs.send(EMAILJS_SERVICE_ID,templateId,params);}
+  catch(e){console.error('EmailJS error:',e);}
+}
+
+/* ====== HELPERS ====== */
+function fmtP(n){return Number(n).toLocaleString('en-IN');}
+function gid(id){return document.getElementById(id);}
+function showToast(msg,err){var t=gid('toast');t.textContent=msg;t.style.background=err?'#ef4444':'#10b981';t.classList.add('on');setTimeout(function(){t.classList.remove('on');},3800);}
+function closeOv(id){gid(id).classList.remove('on');}
+function genId(){return++nxtId;}
+
+/* ====== NAV ====== */
+function toggleMob(){gid('mob-nav').classList.toggle('on');}
+function closeMob(){gid('mob-nav').classList.remove('on');}
+window.addEventListener('scroll',function(){
+  var h=gid('hdr');h.className=window.scrollY>60?'sc':'top';
+  var s=gid('sct');window.scrollY>400?s.classList.add('vis'):s.classList.remove('vis');
+});
+['pkg-ov','dest-ov','book-ov'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('click',function(e){if(e.target===this)closeOv(id);});});
+
+/* ====== APPLY SETTINGS ====== */
+function applySettings(){
+  var s=D.settings;
+  ['hdr-ph','ft-ph'].forEach(function(id){var el=gid(id);if(el)el.textContent=s.phone;});
+  var tg=gid('hero-tagline');if(tg)tg.textContent=s.tagline;
+  var cph=gid('ci-ph');if(cph){cph.textContent=s.phone;cph.href='tel:'+s.phone.replace(/\s/g,'');}
+  var cem=gid('ci-em');if(cem){cem.textContent=s.email;cem.href='mailto:'+s.email;}
+  var ca=gid('ci-addr');if(ca)ca.textContent=s.address;
+  var fa=gid('ft-addr');if(fa)fa.textContent=s.address;
+  var fe=gid('ft-em');if(fe)fe.textContent=s.email;
+  var wa=gid('wa-btn');if(wa)wa.href='https://wa.me/'+(s.whatsapp||'').replace(/\D/g,'');
+}
+
+/* ====== RENDER ====== */
+function renderAll(){renderPkgs('all');renderHotels();renderCars();}
+
+function renderPkgs(cat){
+  var g=gid('pkg-grid');g.innerHTML='';
+  var list=cat==='all'?D.packages:D.packages.filter(function(p){return p.cat===cat;});
+  if(!list.length){g.innerHTML='<p style="color:var(--gray);padding:20px 0;grid-column:1/-1">No packages in this category.</p>';return;}
+  list.forEach(function(p){
+    var bh=p.badge?'<span class="badge b-gold">'+p.badge+'</span>':'';
+    var tags=(p.tags||'').split(',').map(function(t){return'<span class="ptag">'+t.trim()+'</span>';}).join('');
+    g.innerHTML+='<div class="pkg-card"><div class="pi" onclick="openPkgDetail('+p.id+')"><img src="'+p.img+'" alt="'+p.name+'" loading="lazy" onerror="this.style.background=\'#d4d0c8\'">'+bh+'<span class="pi-dur">'+p.dur+'</span><div class="pi-ov"><span>View Details</span></div></div><div class="pb"><div class="pn" onclick="openPkgDetail('+p.id+')">'+p.name+'</div><div class="pd">'+p.desc+'</div><div class="ptags">'+tags+'</div><div class="pf"><div class="pp"><label>Starting from</label><strong>₹'+fmtP(p.price)+'</strong> <span>/person</span></div><div class="pkg-btns"><button class="btn btn-gold btn-sm" onclick="openPkgDetail('+p.id+')">Details</button><button class="btn btn-navy btn-sm" onclick="openBook('+p.id+')">Book</button></div></div></div></div>';
+  });
+}
+function filterPkg(cat,btn){
+  if(btn){document.querySelectorAll('.ft').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');}
+  renderPkgs(cat);
+}
+
+function renderHotels(){
+  var g=gid('hotel-grid');g.innerHTML='';
+  D.hotels.forEach(function(h){
+    var stars='★'.repeat(h.stars)+'☆'.repeat(5-h.stars);
+    g.innerHTML+='<div class="hcard"><div class="hi"><img src="'+h.img+'" alt="'+h.name+'" loading="lazy" onerror="this.style.background=\'#d4d0c8\'"><span class="badge b-gold">'+h.badge+'</span></div><div class="hb"><div class="hn">'+h.name+'</div><div class="hloc">📍 '+h.loc+'</div><div class="hstars">'+stars+'</div><div class="ham">✓ '+h.am+'</div><div class="hft"><div class="hpr">₹'+fmtP(h.price)+'<span>/night</span></div><a href="#enq" class="btn btn-navy btn-sm">Book</a></div></div></div>';
+  });
+}
+
+function renderCars(){
+  var g=gid('car-grid');g.innerHTML='';
+  D.cars.forEach(function(c){
+    var imgHtml=c.img?'<img src="'+c.img+'" alt="'+c.name+'" loading="lazy" onerror="this.style.display=\'none\'">'+'<div class="car-emoji" style="display:none">'+(c.ico||'🚗')+'</div>':'<div class="car-emoji">'+(c.ico||'🚗')+'</div>';
+    g.innerHTML+='<div class="ccard"><div class="car-img-wrap">'+imgHtml+'</div><div class="ccard-body"><div class="ct">'+c.type+'</div><div class="cn">'+c.name+'</div><div class="csp"><span>👤 '+c.seats+'</span><span>⛽ '+c.fuel+'</span><span>⚙️ '+c.tr+'</span></div><div class="cp">₹'+fmtP(c.price)+'<small>/day</small></div><a href="#enq" class="btn btn-navy btn-sm" style="width:100%;justify-content:center">Book Now</a></div></div>';
+  });
+}
+
+/* ====== HERO SLIDER ====== */
+var curSlide=0;
+function initSlider(){
+  var sl=document.querySelectorAll('.hs'),dc=gid('h-dots');
+  sl.forEach(function(_,i){var d=document.createElement('div');d.className='h-dot'+(i===0?' on':'');d.onclick=function(){goSlide(i);};dc.appendChild(d);});
+  setInterval(function(){goSlide((curSlide+1)%sl.length);},5000);
+}
+function goSlide(n){var sl=document.querySelectorAll('.hs'),ds=document.querySelectorAll('.h-dot');sl[curSlide].classList.remove('on');ds[curSlide].classList.remove('on');curSlide=n;sl[n].classList.add('on');ds[n].classList.add('on');}
+
+/* ====== PKG DETAIL ====== */
+function getPKG(id){return PKG_D[id]||{overview:'',highlights:[],itinerary:[],inc:[],exc:[]};}
+function openPkgDetail(id){
+  var p=D.packages.find(function(x){return x.id===id;});if(!p)return;
+  var d=getPKG(id);
+  gid('pkg-ov-title').textContent=p.name;
+  var hlH=(d.highlights||[]).map(function(h){return'<div class="pdm-hl"><div class="ico">'+h.ico+'</div><span>'+h.txt+'</span></div>';}).join('');
+  var itH=(d.itinerary||[]).map(function(it){return'<div class="it-day"><div class="it-dot">D'+it.day+'</div><div class="it-title">Day '+it.day+': '+it.title+'</div><div class="it-desc">'+it.desc+'</div></div>';}).join('');
+  var incH=(d.inc||[]).map(function(i){return'<li>'+i+'</li>';}).join('');
+  var excH=(d.exc||[]).map(function(i){return'<li>'+i+'</li>';}).join('');
+  gid('pkg-ov-body').innerHTML='<div class="pdm-hero"><img src="'+p.img+'" alt="'+p.name+'" onerror="this.style.background=\'var(--navy)\'">'
+    +'<div class="pdm-ho"><h2>'+p.name+'</h2><div class="pdm-meta"><span class="pdm-met">📅 '+p.dur+'</span><span class="pdm-met">🏷️ '+(p.cat.charAt(0).toUpperCase()+p.cat.slice(1))+'</span>'+(p.badge?'<span class="pdm-met">⭐ '+p.badge+'</span>':'')+'</div></div></div>'
+    +'<div class="pdm-tabs"><div class="pdt on" id="pdt-ov" onclick="switchPT(\'ov\')">Overview</div><div class="pdt" id="pdt-it" onclick="switchPT(\'it\')">Day-wise</div><div class="pdt" id="pdt-in" onclick="switchPT(\'in\')">Inclusions</div></div>'
+    +'<div class="ptab on" id="ptab-ov"><div class="pdm-ov"><p>'+(d.overview||p.desc)+'</p></div>'+(hlH?'<h4 style="font-size:.75rem;font-weight:700;text-transform:uppercase;color:var(--navy);margin-bottom:10px">Trip Highlights</h4><div class="pdm-hls">'+hlH+'</div>':'')+'</div>'
+    +'<div class="ptab" id="ptab-it">'+(itH?'<div class="itin" style="margin-top:4px">'+itH+'</div>':'<p style="color:var(--gray);font-size:.85rem">Detailed itinerary shared at time of booking.</p>')+'</div>'
+    +'<div class="ptab" id="ptab-in"><div class="inc-grid"><div class="inc-col yes"><h4>✅ Included</h4><ul class="inc-list">'+(incH||'<li>Details shared after booking</li>')+'</ul></div><div class="inc-col no"><h4>❌ Not Included</h4><ul class="inc-list">'+(excH||'<li>Details shared after booking</li>')+'</ul></div></div></div>'
+    +'<div class="pdm-foot"><div><label style="font-size:.66rem;color:var(--gray);text-transform:uppercase;font-weight:700;display:block;margin-bottom:3px">Starting From</label><div class="pdm-price">₹'+fmtP(p.price)+' <small>/person</small></div></div>'
+    +'<div class="pdm-acts"><button class="btn btn-gold" onclick="closeOv(\'pkg-ov\');openBook('+p.id+')">Book Now →</button><button class="btn btn-ghost" onclick="closeOv(\'pkg-ov\');document.getElementById(\'enq\').scrollIntoView({behavior:\'smooth\'})">Enquiry</button></div></div>';
+  gid('pkg-ov').classList.add('on');
+}
+function switchPT(t){['ov','it','in'].forEach(function(n){gid('pdt-'+n)&&gid('pdt-'+n).classList.toggle('on',n===t);gid('ptab-'+n)&&gid('ptab-'+n).classList.toggle('on',n===t);});}
+
+/* ====== DEST DETAIL ====== */
+function openDest(key){
+  var d=DEST_D[key];if(!d)return;
+  gid('dest-ov-title').textContent=d.name;
+  var chips=d.chips.map(function(c){return'<span class="dchip">'+c+'</span>';}).join('');
+  var attrs=d.attractions.map(function(a){return'<div class="dattr"><div class="ico">'+a.ico+'</div><div><strong>'+a.name+'</strong><span>'+a.desc+'</span></div></div>';}).join('');
+  var info=d.info.map(function(i){return'<li><strong>'+i.k+'</strong> '+i.v+'</li>';}).join('');
+  gid('dest-ov-body').innerHTML='<div class="ddm-hero"><img src="'+d.img+'" alt="'+d.name+'" onerror="this.style.background=\'var(--navy)\'">'
+    +'<div class="ddm-ho"><h2>'+d.name+'</h2><div class="ddm-tl">'+d.tagline+'</div><div class="dchips">'+chips+'</div></div></div>'
+    +'<p class="ddm-about">'+d.about+'</p>'
+    +'<div class="ddm-grid"><div class="ddm-sec"><h4>Top Attractions</h4><div class="dattr-grid">'+attrs+'</div></div><div class="ddm-sec"><h4>Travel Info</h4><ul class="dinfo">'+info+'</ul></div></div>'
+    +'<div class="ddm-cta"><div><h4>Ready to Visit '+d.name+'?</h4><p>Explore our packages including '+d.name+'</p></div>'
+    +'<div class="ddm-cta-btns"><button class="btn btn-gold" onclick="closeOv(\'dest-ov\');document.getElementById(\'pkgs\').scrollIntoView({behavior:\'smooth\'})">View Packages →</button><button class="btn btn-out" onclick="closeOv(\'dest-ov\');document.getElementById(\'enq\').scrollIntoView({behavior:\'smooth\'})">Custom Trip</button></div></div>';
+  gid('dest-ov').classList.add('on');
+}
+
+/* ====== ENQUIRY FORM ====== */
+async function submitEnq(){
+  var n=gid('f-name').value.trim(),ph=gid('f-phone').value.trim();
+  if(!n||!ph){showToast('⚠️ Please fill Name and Phone.',true);return;}
+  // Send enquiry email to admin
+  await sendEmail(EMAILJS_ENQ_ADMIN,{
+    customer_name:n,
+    customer_phone:ph,
+    customer_email:gid('f-email').value||'—',
+    destination:gid('f-dest').value||'Not specified',
+    travel_month:gid('f-month').value||'Not specified',
+    group_size:gid('f-grp').value||'Not specified',
+    message:gid('f-msg').value||'—',
+    to_email:'info@ishwarholidays.com'
+  });
+  showToast("✅ Enquiry sent! We'll call you within 2 hours.");
+  ['f-name','f-phone','f-email','f-msg'].forEach(function(id){gid(id).value='';});
+  ['f-dest','f-month','f-grp'].forEach(function(id){gid(id).selectedIndex=0;});
+}
+
+/* ====== BOOKING FLOW ====== */
+function openBook(pkgId){
+  bkPkg=D.packages.find(function(p){return p.id===pkgId;});
+  if(!bkPkg)return;
+  gid('bk-pkg-nm').textContent=bkPkg.name;
+  gid('bk-title').textContent='Choose an Option';
+  showBS(0);payPct=50;bkData={};
+  gid('book-ov').classList.add('on');
+}
+function showBS(n){for(var i=0;i<=4;i++){var el=gid('bs'+i);if(el)el.style.display=n===i?'block':'none';}}
+function goEnq(){closeOv('book-ov');document.getElementById('enq').scrollIntoView({behavior:'smooth'});setTimeout(function(){var f=gid('f-name');if(f)f.focus();},600);}
+function startBook(){
+  gid('bk-title').textContent='Book — '+bkPkg.name;
+  var t=new Date();t.setDate(t.getDate()+1);
+  var ds=t.toISOString().split('T')[0];
+  gid('bk-cin').min=ds;gid('bk-cin').value=ds;
+  showBS(1);
+}
+function goStep2(){
+  var nm=gid('bk-name').value.trim(),ph=gid('bk-ph').value.trim(),em=gid('bk-em').value.trim();
+  if(!nm){showToast('⚠️ Please enter your name.',true);return;}
+  if(!ph||ph.replace(/\D/g,'').length<10){showToast('⚠️ Please enter a valid phone number.',true);return;}
+  if(!em||!em.includes('@')){showToast('⚠️ Please enter a valid email address.',true);return;}
+  bkData={name:nm,phone:ph,email:em,checkin:gid('bk-cin').value,adults:gid('bk-adu').value,children:gid('bk-chi').value,requests:gid('bk-req').value};
+  var adu=parseInt(bkData.adults)||1;
+  buildPayOpts(bkPkg.price*adu);
+  gid('bk-title').textContent='Select Payment Plan';showBS(2);
+}
+function buildPayOpts(total){
+  var opts=[{pct:30,lbl:'Partial Pay',note:'Pay 30% now. Remaining 70% due 7 days before trip.'},{pct:50,lbl:'Half & Half',note:'Pay 50% now. Balance due on arrival.'},{pct:100,lbl:'Full Payment',note:'Pay 100% now and get 5% extra discount!'}];
+  gid('popts').innerHTML=opts.map(function(o){var amt=o.pct===100?Math.round(total*0.95):Math.round(total*(o.pct/100));return'<div class="po'+(payPct===o.pct?' sel':'')+'" onclick="selPay('+o.pct+','+total+',this)"><div class="pct">'+o.pct+'%</div><div class="plbl">'+o.lbl+'</div><div class="pamt">₹'+fmtP(amt)+'</div></div>';}).join('');
+  gid('pnote').textContent='ℹ️ '+(opts.find(function(o){return o.pct===payPct;})||opts[1]).note;
+}
+function selPay(pct,total,el){
+  payPct=pct;
+  document.querySelectorAll('.po').forEach(function(p){p.classList.remove('sel');});el.classList.add('sel');
+  var notes={30:'Pay 30% now. Remaining 70% due 7 days before trip.',50:'Pay 50% now. Balance due on arrival.',100:'Pay 100% now and get 5% extra discount!'};
+  gid('pnote').textContent='ℹ️ '+notes[pct];
+}
+function goStep3(){
+  var adu=parseInt(bkData.adults)||1,total=bkPkg.price*adu;
+  var paying=payPct===100?Math.round(total*0.95):Math.round(total*(payPct/100));
+  var bal=payPct===100?0:total-paying;
+  var upi=D.settings.upi||'mirmd.shafi5@okhdfcbank';
+  bkData.total=total;bkData.paying=paying;bkData.bal=bal;bkData.payPct=payPct;
+  gid('qr-img').src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='+encodeURIComponent('upi://pay?pa='+upi+'&pn=Ishwar+Holidays&am='+paying+'&cu=INR&tn=Booking-'+bkPkg.name.replace(/\s/g,'+'))+'&color=09142a&bgcolor=ffffff';
+  gid('qr-upi').textContent='UPI ID: '+upi;
+  gid('psum').innerHTML='<div style="font-size:.72rem;color:rgba(255,255,255,.6);margin-bottom:7px;text-transform:uppercase">Payment Summary</div>'
+    +'<div class="pr"><span>Package</span><span>'+bkPkg.name+'</span></div>'
+    +'<div class="pr"><span>Adults</span><span>'+adu+'</span></div>'
+    +'<div class="pr"><span>Base Amount</span><span>₹'+fmtP(total)+'</span></div>'
+    +(payPct===100?'<div class="pr" style="color:#86efac"><span>5% Discount</span><span>-₹'+fmtP(Math.round(total*0.05))+'</span></div>':'')
+    +'<div class="pr"><span>Plan</span><span>'+payPct+'% Now</span></div>'
+    +(bal>0?'<div class="pr"><span>Balance (due later)</span><span>₹'+fmtP(bal)+'</span></div>':'')
+    +'<div class="pt"><span>Pay Now</span><span>₹'+fmtP(paying)+'</span></div>';
+  gid('bk-title').textContent='Scan & Pay';showBS(3);
+}
+async function confirmPay(){
+  var ref='IH-'+Date.now().toString(36).toUpperCase().slice(-6);
+  // Show confirmation screen first
+  gid('conf-ref').textContent='Booking Ref: '+ref;
+  gid('conf-phone').textContent=bkData.phone;
+  gid('bk-title').textContent='Booking Confirmed 🎉';
+  showBS(4);
+  // Send email to admin
+  await sendEmail(EMAILJS_BOOK_ADMIN,{
+    ref_id:ref,
+    package_name:bkPkg.name,
+    customer_name:bkData.name,
+    customer_phone:bkData.phone,
+    customer_email:bkData.email,
+    checkin:bkData.checkin,
+    adults:bkData.adults,
+    children:bkData.children,
+    payment_plan:bkData.payPct+'% advance',
+    amount_paid:'₹'+fmtP(bkData.paying),
+    base_amount:'₹'+fmtP(bkData.total),
+    balance_due:bkData.bal>0?'₹'+fmtP(bkData.bal):'Nil (Full paid)',
+    special_requests:bkData.requests||'None',
+    to_email:'info@ishwarholidays.com'
+  });
+  // Send confirmation email to customer
+  await sendEmail(EMAILJS_BOOK_CUST,{
+    ref_id:ref,
+    package_name:bkPkg.name,
+    customer_name:bkData.name,
+    customer_phone:bkData.phone,
+    checkin:bkData.checkin,
+    adults:bkData.adults,
+    amount_paid:'₹'+fmtP(bkData.paying),
+    to_email:bkData.email
+  });
+  // Save booking to Firestore
+  if(fbOk&&db){
+    try{await db.collection('ishwar_bookings').add({ref:ref,pkg:bkPkg.name,...bkData,timestamp:new Date().toISOString()});}
+    catch(e){console.log('Booking save error:',e);}
+  }
+}
+
+/* ====== ADMIN ====== */
+document.addEventListener('keydown',function(e){if(e.ctrlKey&&e.shiftKey&&(e.key==='A'||e.key==='a')){e.preventDefault();openAdm();}});
+['adm-u','adm-p'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});});
+function openAdm(){gid('adm-ov').classList.add('on');if(!admLogged){gid('adm-li-wrap').style.display='flex';gid('adm-dash').style.display='none';}else showDash();}
+function closeAdm(){gid('adm-ov').classList.remove('on');}
+
+async function doLogin(){
+  var u=gid('adm-u').value.trim(),p=gid('adm-p').value.trim();
+  if(!u||!p)return;
+  var btn=gid('adm-login-btn'),note=gid('adm-login-note'),err=gid('adm-err');
+  btn.disabled=true;note.style.display='block';err.style.display='none';
+  // Check credentials from Firestore
+  if(fbOk&&db){
+    try{
+      var snap=await db.collection('ishwar_config').doc('admin').get();
+      if(snap.exists){
+        var creds=snap.data();
+        if(u===creds.username&&p===creds.password){admLogged=true;note.style.display='none';btn.disabled=false;showDash();return;}
+      }
+    }catch(e){console.error('Auth error:',e);}
+    err.style.display='block';note.style.display='none';btn.disabled=false;
+  }else{
+    // Fallback if Firebase not configured (dev mode only)
+    if(u==='admin'&&p==='Ishwar@2024'){admLogged=true;note.style.display='none';btn.disabled=false;showDash();}
+    else{err.style.display='block';note.style.display='none';btn.disabled=false;}
+  }
+}
+
+function logoutAdm(){admLogged=false;closeAdm();gid('adm-u').value='';gid('adm-p').value='';}
+function showDash(){
+  gid('adm-li-wrap').style.display='none';
+  gid('adm-dash').style.display='flex';
+  renderAdmTbls();loadSettings();
+  gid('ov-pkg').textContent=D.packages.length;
+  gid('ov-htl').textContent=D.hotels.length;
+  gid('ov-car').textContent=D.cars.length;
+}
+function admTab(id,btn){
+  document.querySelectorAll('.at').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');
+  document.querySelectorAll('.adm-sec').forEach(function(s){s.classList.remove('on');});
+  gid('adm-'+id+'-sec').classList.add('on');
+}
+function closeEf(id){gid(id).classList.remove('on');}
+function switchAPTab(t){['basic','overview','itinerary','inclusions'].forEach(function(n){gid('apdt-'+n)&&gid('apdt-'+n).classList.toggle('on',n===t);gid('aptab-'+n)&&gid('aptab-'+n).classList.toggle('on',n===t);});}
+
+function renderAdmTbls(){
+  var pt='<tr><th>#</th><th>Name</th><th>Dur</th><th>Price</th><th>Cat</th><th>Actions</th></tr>';
+  D.packages.forEach(function(p,i){pt+='<tr><td>'+(i+1)+'</td><td>'+p.name+'</td><td>'+p.dur+'</td><td>₹'+fmtP(p.price)+'</td><td>'+p.cat+'</td><td><button class="aeb" onclick="openPkgEf('+p.id+')">Edit</button><button class="aeb" style="background:#ef4444" onclick="delI(\'packages\','+p.id+')">Del</button></td></tr>';});
+  gid('pkg-tbl').innerHTML=pt;
+  var ht='<tr><th>#</th><th>Name</th><th>Location</th><th>Stars</th><th>Price/Night</th><th>Actions</th></tr>';
+  D.hotels.forEach(function(h,i){ht+='<tr><td>'+(i+1)+'</td><td>'+h.name+'</td><td>'+h.loc+'</td><td>'+h.stars+'★</td><td>₹'+fmtP(h.price)+'</td><td><button class="aeb" onclick="openHtlEf('+h.id+')">Edit</button><button class="aeb" style="background:#ef4444" onclick="delI(\'hotels\','+h.id+')">Del</button></td></tr>';});
+  gid('htl-tbl').innerHTML=ht;
+  var ct='<tr><th>#</th><th>Name</th><th>Type</th><th>Seats</th><th>Price/Day</th><th>Actions</th></tr>';
+  D.cars.forEach(function(c,i){ct+='<tr><td>'+(i+1)+'</td><td>'+c.name+'</td><td>'+c.type+'</td><td>'+c.seats+'</td><td>₹'+fmtP(c.price)+'</td><td><button class="aeb" onclick="openCarEf('+c.id+')">Edit</button><button class="aeb" style="background:#ef4444" onclick="delI(\'cars\','+c.id+')">Del</button></td></tr>';});
+  gid('car-tbl').innerHTML=ct;
+  gid('ov-pkg').textContent=D.packages.length;gid('ov-htl').textContent=D.hotels.length;gid('ov-car').textContent=D.cars.length;
+}
+
+function delI(col,id){if(!confirm('Delete this item?'))return;D[col]=D[col].filter(function(x){return x.id!==id;});persist();renderAll();renderAdmTbls();}
+
+function openPkgEf(id){
+  editPkgId=id;var isNew=id===-1;
+  gid('pkg-ef-h').textContent=isNew?'Add New Package':'Edit Package';
+  var p=isNew?{name:'',dur:'',price:'',badge:'',cat:'family',tags:'',desc:'',img:''}:D.packages.find(function(x){return x.id===id;})||{};
+  var d=isNew?{overview:'',highlights:[],itinerary:[],inc:[],exc:[]}:getPKG(id);
+  gid('pe-name').value=p.name||'';gid('pe-dur').value=p.dur||'';gid('pe-price').value=p.price||'';
+  gid('pe-badge').value=p.badge||'';gid('pe-cat').value=p.cat||'family';gid('pe-tags').value=p.tags||'';
+  gid('pe-desc').value=p.desc||'';gid('pe-img').value=p.img||'';
+  previewPhoto('pe-img','pkg-preview');
+  gid('pe-overview').value=d.overview||'';
+  gid('pe-highlights').value=(d.highlights||[]).map(function(h){return h.ico+'|'+h.txt;}).join('\n');
+  gid('pe-itinerary').value=(d.itinerary||[]).map(function(it){return it.title+'|'+it.desc;}).join('\n');
+  gid('pe-inc').value=(d.inc||[]).join('\n');gid('pe-exc').value=(d.exc||[]).join('\n');
+  togglePhotoSrc('pkg','url');switchAPTab('basic');gid('pkg-ef').classList.add('on');
+}
+
+function savePkg(){
+  var nm=gid('pe-name').value.trim();if(!nm){alert('Package name is required.');return;}
+  var data={name:nm,dur:gid('pe-dur').value,price:parseFloat(gid('pe-price').value)||0,badge:gid('pe-badge').value,cat:gid('pe-cat').value,tags:gid('pe-tags').value,desc:gid('pe-desc').value,img:gid('pe-img').value};
+  var hlLines=gid('pe-highlights').value.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  var itLines=gid('pe-itinerary').value.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  var incLines=gid('pe-inc').value.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  var excLines=gid('pe-exc').value.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  var highlights=hlLines.map(function(l){var pts=l.split('|');return{ico:pts[0].trim(),txt:pts.slice(1).join('|').trim()};}).filter(function(h){return h.ico&&h.txt;});
+  var itinerary=itLines.map(function(l,i){var pts=l.split('|');return{day:i+1,title:pts[0].trim(),desc:pts.slice(1).join('|').trim()};}).filter(function(it){return it.title;});
+  var pkgId;
+  if(editPkgId===-1){pkgId=genId();D.packages.push(Object.assign({id:pkgId},data));}
+  else{pkgId=editPkgId;var p=D.packages.find(function(x){return x.id===pkgId;});if(p)Object.assign(p,data);}
+  PKG_D[pkgId]={overview:gid('pe-overview').value.trim()||data.desc,highlights:highlights,itinerary:itinerary,inc:incLines,exc:excLines};
+  persist();renderAll();renderAdmTbls();closeEf('pkg-ef');
+}
+
+function openHtlEf(id){
+  editHtlId=id;var isNew=id===-1;
+  gid('htl-ef-h').textContent=isNew?'Add New Hotel':'Edit Hotel';
+  var h=isNew?{name:'',loc:'',stars:3,price:'',badge:'',am:'',img:''}:D.hotels.find(function(x){return x.id===id;})||{};
+  gid('he-name').value=h.name||'';gid('he-loc').value=h.loc||'';gid('he-stars').value=h.stars||3;
+  gid('he-price').value=h.price||'';gid('he-badge').value=h.badge||'';gid('he-am').value=h.am||'';gid('he-img').value=h.img||'';
+  previewPhoto('he-img','htl-preview');
+  togglePhotoSrc('htl','url');gid('htl-ef').classList.add('on');
+}
+function saveHtl(){
+  var nm=gid('he-name').value.trim();if(!nm){alert('Hotel name required.');return;}
+  var data={name:nm,loc:gid('he-loc').value,stars:parseInt(gid('he-stars').value)||3,price:parseFloat(gid('he-price').value)||0,badge:gid('he-badge').value,am:gid('he-am').value,img:gid('he-img').value};
+  if(editHtlId===-1){D.hotels.push(Object.assign({id:genId()},data));}
+  else{var h=D.hotels.find(function(x){return x.id===editHtlId;});if(h)Object.assign(h,data);}
+  persist();renderHotels();renderAdmTbls();closeEf('htl-ef');
+}
+
+function openCarEf(id){
+  editCarId=id;var isNew=id===-1;
+  gid('car-ef-h').textContent=isNew?'Add New Car':'Edit Car';
+  var c=isNew?{name:'',type:'',seats:4,fuel:'',tr:'',price:'',ico:'🚗',img:''}:D.cars.find(function(x){return x.id===id;})||{};
+  gid('ce-name').value=c.name||'';gid('ce-type').value=c.type||'';gid('ce-seats').value=c.seats||4;
+  gid('ce-fuel').value=c.fuel||'';gid('ce-tr').value=c.tr||'';gid('ce-price').value=c.price||'';
+  gid('ce-ico').value=c.ico||'🚗';gid('ce-img').value=c.img||'';
+  previewPhoto('ce-img','car-preview');
+  togglePhotoSrc('car','url');gid('car-ef').classList.add('on');
+}
+function saveCar(){
+  var nm=gid('ce-name').value.trim();if(!nm){alert('Car name required.');return;}
+  var data={name:nm,type:gid('ce-type').value,seats:parseInt(gid('ce-seats').value)||4,fuel:gid('ce-fuel').value,tr:gid('ce-tr').value,price:parseFloat(gid('ce-price').value)||0,ico:gid('ce-ico').value||'🚗',img:gid('ce-img').value||''};
+  if(editCarId===-1){D.cars.push(Object.assign({id:genId()},data));}
+  else{var c=D.cars.find(function(x){return x.id===editCarId;});if(c)Object.assign(c,data);}
+  persist();renderCars();renderAdmTbls();closeEf('car-ef');
+}
+
+function loadSettings(){
+  var s=D.settings;
+  gid('st-ph').value=s.phone||'';gid('st-em').value=s.email||'';gid('st-wa').value=s.whatsapp||'';
+  gid('st-upi').value=s.upi||'';gid('st-addr').value=s.address||'';gid('st-tag').value=s.tagline||'';
+}
+function saveSettings(){
+  D.settings.phone=gid('st-ph').value;D.settings.email=gid('st-em').value;
+  D.settings.whatsapp=gid('st-wa').value;D.settings.upi=gid('st-upi').value;
+  D.settings.address=gid('st-addr').value;D.settings.tagline=gid('st-tag').value;
+  applySettings();persist();
+}
+
+/* ====== INIT ====== */
+document.addEventListener('DOMContentLoaded', function(){
+  applySettings();
+  renderAll();
+  initSlider();
+  initFirebase();
+});
+</script>
+</body>
+</html>
