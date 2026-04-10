@@ -6,102 +6,8 @@
 <title>Ishwar Holidays — Jammu & Kashmir Tourism</title>
 
 <!--
-=======================================================
   ISHWAR HOLIDAYS — PRODUCTION READY
-  
-  SETUP CHECKLIST:
-  ─────────────────────────────────────────────────────
-  1. FIREBASE (for live data sync):
-     a) Go to https://console.firebase.google.com
-     b) Create project → Enable Firestore (test mode)
-     c) Project Settings → Web App → Copy config
-     d) Replace FIREBASE CONFIG section below
-     e) In Firestore, create doc: ishwar_config/admin
-        Fields: username (string), password (string)
-
-  2. EMAILJS (for booking & enquiry emails — FREE):
-     a) Go to https://www.emailjs.com → Sign up free
-     b) Add Email Service (use Gmail → info@ishwarholidays.com)
-     c) Create 3 templates (see EMAILJS TEMPLATES below)
-     d) Replace EMAILJS CONFIG section below
-
-  3. GITHUB PAGES (free hosting):
-     a) Create repo: ishwarholidays (or any name)
-     b) Upload this single index.html file
-     c) Settings → Pages → Deploy from main branch
-     d) Your site: https://yourusername.github.io/ishwarholidays
-
-  4. HOSTINGER DOMAIN (ishwarholidays.com):
-     a) Hostinger → Domains → ishwarholidays.com → DNS
-     b) Add CNAME record:
-        Name: www  →  Value: yourusername.github.io
-     c) Add A records (GitHub IPs):
-        185.199.108.153
-        185.199.109.153
-        185.199.110.153
-        185.199.111.153
-     d) In GitHub repo → Settings → Pages → Custom Domain
-        Type: ishwarholidays.com → Save
-     e) Check "Enforce HTTPS" after DNS propagates (~24 hrs)
-
-  5. FIREBASE STORAGE (for photo uploads):
-     a) Firebase Console → Storage → Get Started
-     b) Start in test mode → Done
-     c) Update Storage rules (see STORAGE RULES section)
-
-  ADMIN ACCESS: Press Ctrl+Shift+A
-  Credentials stored securely in Firestore → ishwar_config/admin
-  Default (set in Firestore): username: admin | password: Ishwar@2024
-  
-  EMAILJS TEMPLATES NEEDED:
-  ─────────────────────────
-  Template 1 ID: booking_admin  (sent to info@ishwarholidays.com)
-  Subject: New Booking — {{package_name}} | Ref: {{ref_id}}
-  Body: 
-    Booking Reference: {{ref_id}}
-    Package: {{package_name}}
-    Name: {{customer_name}}
-    Phone: {{customer_phone}}
-    Email: {{customer_email}}
-    Check-in: {{checkin}}
-    Adults: {{adults}} | Children: {{children}}
-    Payment Plan: {{payment_plan}}
-    Amount Paid: ₹{{amount_paid}}
-    Special Requests: {{special_requests}}
-
-  Template 2 ID: booking_customer (sent to customer)
-  Subject: Booking Confirmed! Ref: {{ref_id}} — Ishwar Holidays
-  Body:
-    Dear {{customer_name}},
-    Your booking is confirmed! 🎉
-    Reference No: {{ref_id}}
-    Package: {{package_name}}
-    Check-in: {{checkin}}
-    We have received your booking. Our support team will call you shortly at {{customer_phone}}.
-    Thank you for choosing Ishwar Holidays!
-
-  Template 3 ID: enquiry_admin (sent to info@ishwarholidays.com)  
-  Subject: New Enquiry from {{customer_name}}
-  Body:
-    Name: {{customer_name}}
-    Phone: {{customer_phone}}
-    Email: {{customer_email}}
-    Destination: {{destination}}
-    Month: {{travel_month}}
-    Group: {{group_size}}
-    Message: {{message}}
-
-  FIREBASE STORAGE RULES (paste in Firebase Console → Storage → Rules):
-  rules_version = '2';
-  service firebase.storage {
-    match /b/{bucket}/o {
-      match /ishwar_uploads/{allPaths=**} {
-        allow read: if true;
-        allow write: if true; // Tighten after launch
-      }
-    }
-  }
-=======================================================
+  designed with love
 -->
 
 <!-- Firebase SDKs -->
@@ -734,7 +640,7 @@ footer{background:#050e1d;color:rgba(255,255,255,.68);padding:40px 0 0}@media(mi
       <div class="fci"><span class="ico">📍</span><span id="ft-addr">Srinagar, J&amp;K – 190001</span></div>
       <div class="fci"><span class="ico">📞</span><span id="ft-ph">+91-7889723200</span></div>
       <div class="fci"><span class="ico">✉️</span><span id="ft-em">info@ishwarholidays.com</span></div>
-      <div class="fci"><span class="ico">🕐</span><span>Mon–Sat: 9 AM – 7 PM</span></div>
+      <div class="fci"><span class="ico">🕐</span><span>Mon–Sat: 9 AM – 11:50 PM</span></div>
     </div></div>
   </div>
   <div class="fbot"><span>© 2025 Ishwar Holidays. All rights reserved.</span><div class="fbot-l"><a href="#">Privacy Policy</a><a href="#">Terms &amp; Conditions</a></div></div>
@@ -1013,15 +919,6 @@ footer{background:#050e1d;color:rgba(255,255,255,.68);padding:40px 0 0}@media(mi
 </div>
 
 <script>
-/* =======================================================
-   ██████╗  ██████╗ ███╗   ██╗███████╗██╗ ██████╗ 
-   ██╔════╝██╔═══██╗████╗  ██║██╔════╝██║██╔════╝ 
-   ██║     ██║   ██║██╔██╗ ██║█████╗  ██║██║  ███╗
-   ██║     ██║   ██║██║╚██╗██║██╔══╝  ██║██║   ██║
-   ╚██████╗╚██████╔╝██║ ╚████║██║     ██║╚██████╔╝
-    ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝ 
-   REPLACE THE SECTION BELOW WITH YOUR OWN VALUES
-   ======================================================= */
 
 var firebaseConfig = {
   apiKey:            "AIzaSyBoOSYD6q-k_tn8R2pMZCBayVquLsGmSn4",
@@ -1035,9 +932,9 @@ var firebaseConfig = {
 // EmailJS — from emailjs.com dashboard
 var EMAILJS_PUBLIC_KEY   = "Ntzp54_oNyyVMztj2";
 var EMAILJS_SERVICE_ID   = "service_qaapf17";
-var EMAILJS_BOOK_ADMIN   = "booking_admin";      // template sent to you
-var EMAILJS_BOOK_CUST    = "booking_customer";   // template sent to customer
-var EMAILJS_ENQ_ADMIN    = "enquiry_admin";      // template for enquiries
+var EMAILJS_BOOK_ADMIN   = "booking_admin";      
+var EMAILJS_BOOK_CUST    = "booking_customer";   
+var EMAILJS_ENQ_ADMIN    = "enquiry_admin";      
 
 /* ======================================================= */
 
@@ -1136,31 +1033,31 @@ function setFbIndicator(ok){
 
 /* ====== FIREBASE PERSIST ====== */
 // async function persist(){
-//   if(!fbOk||!db){showToast('⚠️ Firebase not connected — changes not saved.',true);return;}
+//   if(!fbOk||!db){showToast(' Firebase not connected — changes not saved.',true);return;}
 //   try{
 //     await db.collection('ishwar').doc('site_data').set({D:D});
 //     await db.collection('ishwar').doc('pkg_details').set({P:PKG_D});
-//     showToast('✅ Saved! All visitors see updates immediately.');
-//   }catch(e){showToast('❌ Save failed: '+e.message,true);}
+//     showToast(' Saved! All visitors see updates immediately.');
+//   }catch(e){showToast(' Save failed: '+e.message,true);}
 // }
   async function persist(){
-  if(!fbOk||!db){showToast('⚠️ Firebase not connected — changes not saved.',true);return;}
+  if(!fbOk||!db){showToast(' Firebase not connected — changes not saved.',true);return;}
   try{
     await db.collection('ishwar').doc('site_data').set({D:D});
     var pkgToSave={};
     Object.keys(PKG_D).forEach(function(k){pkgToSave[String(k)]=PKG_D[k];});
     await db.collection('ishwar').doc('pkg_details').set({P:pkgToSave});
-    showToast('✅ Saved! All visitors see updates immediately.');
+    showToast(' Saved! All visitors see updates immediately.');
   }catch(e){
     console.error('Persist error:',e);
-    showToast('❌ Save failed: '+e.message,true);
+    showToast(' Save failed: '+e.message,true);
   }
 }
 
 /* ====== FIREBASE STORAGE UPLOAD ====== */
 async function handleUpload(event,imgFieldId,previewId,progFillId,progId){
   var file=event.target.files[0];if(!file)return;
-  if(!fbOk||!storage){showToast('⚠️ Firebase Storage not configured.',true);return;}
+  if(!fbOk||!storage){showToast(' Firebase Storage not configured.',true);return;}
   var prog=gid(progId),fill=gid(progFillId);
   prog.classList.add('vis');fill.style.width='0%';
   try{
@@ -1174,10 +1071,10 @@ async function handleUpload(event,imgFieldId,previewId,progFillId,progId){
     gid(imgFieldId).value=url;
     var prev=gid(previewId);if(prev){prev.src=url;prev.classList.add('vis');}
     prog.classList.remove('vis');
-    showToast('✅ Photo uploaded successfully!');
+    showToast(' Photo uploaded successfully!');
   }catch(e){
     prog.classList.remove('vis');
-    showToast('❌ Upload failed: '+e.message,true);
+    showToast(' Upload failed: '+e.message,true);
   }
 }
 
@@ -1317,7 +1214,7 @@ function openDest(key){
 /* ====== ENQUIRY FORM ====== */
 async function submitEnq(){
   var n=gid('f-name').value.trim(),ph=gid('f-phone').value.trim();
-  if(!n||!ph){showToast('⚠️ Please fill Name and Phone.',true);return;}
+  if(!n||!ph){showToast(' Please fill Name and Phone.',true);return;}
   // Send enquiry email to admin
   await sendEmail(EMAILJS_ENQ_ADMIN,{
     customer_name:n,
@@ -1329,7 +1226,7 @@ async function submitEnq(){
     message:gid('f-msg').value||'—',
     to_email:'info@ishwarholidays.com'
   });
-  showToast("✅ Enquiry sent! We'll call you within 2 hours.");
+  showToast(" Enquiry sent! We'll call you within 2 hours.");
   ['f-name','f-phone','f-email','f-msg'].forEach(function(id){gid(id).value='';});
   ['f-dest','f-month','f-grp'].forEach(function(id){gid(id).selectedIndex=0;});
 }
@@ -1396,7 +1293,7 @@ async function confirmPay(){
   // Show confirmation screen first
   gid('conf-ref').textContent='Booking Ref: '+ref;
   gid('conf-phone').textContent=bkData.phone;
-  gid('bk-title').textContent='Booking Confirmed 🎉';
+  gid('bk-title').textContent='Booking Confirmed 🎉🎉🎉🎉🎉🎉';
   showBS(4);
   // Send email to admin
   await sendEmail(EMAILJS_BOOK_ADMIN,{
